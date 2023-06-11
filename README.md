@@ -3,7 +3,7 @@
 ## Goals
 1. Understand some typical large integer multiplication algorithms.
 2. Implement the algorithms (with the help of ChatGPT or whatever resource).
-3. (possibly) Read the Princeton paper that settles the $O(nlogn)$ algorithm and implement it.
+3. (possibly) Read the paper that settles the $O(nlogn)$ algorithm and implement it.
 4. (extends) to multiplication algorithms in the quantum world. (May not have time to do it.)
 
 ## Output
