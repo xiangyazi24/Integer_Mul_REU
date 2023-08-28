@@ -1,0 +1,14 @@
+\contentsline {section}{\tocsection {}{1}{Introduction}}{1}{}%
+\contentsline {subsection}{\tocsubsection {}{1.1}{History}}{2}{}%
+\contentsline {section}{\tocsection {}{2}{Large Integer Multiplication Algorithms}}{2}{}%
+\contentsline {subsection}{\tocsubsection {}{2.1}{Traditional/Brute Force Approach}}{2}{}%
+\contentsline {subsection}{\tocsubsection {}{2.2}{Karatsuba and Tom Cook}}{3}{}%
+\contentsline {subsection}{\tocsubsection {}{2.3}{FFT}}{3}{}%
+\contentsline {subsubsection}{\tocsubsubsection {}{2.3.1}{Numerical Error}}{3}{}%
+\contentsline {subsection}{\tocsubsection {}{2.4}{DWT}}{3}{}%
+\contentsline {subsection}{\tocsubsection {}{2.5}{Sch\"onage-Strassen}}{3}{}%
+\contentsline {subsection}{\tocsubsection {}{2.6}{Nussbaumer}}{3}{}%
+\contentsline {section}{\tocsection {}{3}{Time Complexity Analysis}}{3}{}%
+\contentsline {section}{\tocsection {}{4}{Code Examples}}{3}{}%
+\contentsline {section}{\tocsection {}{}{Acknowledgments}}{3}{}%
+\contentsline {section}{\tocsection {}{}{References}}{3}{}%
