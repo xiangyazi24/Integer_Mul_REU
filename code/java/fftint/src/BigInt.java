@@ -1,4 +1,6 @@
 import java.lang.*;
+import java.util.ArrayList;
+
 
 public class BigInt {
     protected int signum = 0;                       // neg = -1, 0 = 0, pos = 1
@@ -17,10 +19,22 @@ public class BigInt {
 
     // Multiply two BigInt numbers using the FFT method
     public BigInt multiply(BigInt val) {
-        int n = makePowerOfTwo(Math.max(mag.length, val.mag.length)) * 2;
-        int signResult = signum * val.signum;
+        int carry = 0;
+        int n = 32;
+        int D = 32;                               // Simplification, typically D = 2^k|n.
+        int M = 1;
+        int N = D * M;
+        int k = (int) log2(D);
+        int n_prime = makePowerOfTwo((int) (D - (2 * M + k)));
+        int M_prime = D / n_prime;
+
         int[] A = padWithZeros(mag, n);             // copies mag into A padded w/ 0's
         int[] B = padWithZeros(val.mag, n);         // copies val.mag into B padded with 0's
+
+        // Step 3: Prepare for DWT by weighting the A, B signals
+        weightArray(A, M_prime, n_prime);
+        weightArray(B, M_prime, n_prime);
+
         int[] root = rootsOfUnity(n);               // creates all n roots of unity
         int[] C = new int[n];                       // result array for A*B
         int[] AF = new int[n];                      // result array for FFT of A
@@ -30,10 +44,71 @@ public class BigInt {
         for (int i = 0; i < n; i++) {
             AF[i] = (int)(((long)AF[i] * (long)BF[i]) % P);    // Component multiply
         }
-        reverseRoots(root);                         // Reverse roots to create inverse roots
-        inverseFFT(AF, root, n, 0, C);         // Leaves inverse FFT result in C
-        propagateCarries(C);                        // Convert C to the right number of bits per entry
-        return new BigInt(signResult, C);
+
+        // Step 5: Dyadic stage
+        dyadic(A, B, n_prime);
+
+        // Step 6: Inverse FFT
+        inverseFFT(AF, root, n, 0, C);
+
+        // Step 7: Normalization (also reverses indices)
+        normalization(A, C, k, M_prime, n_prime);
+
+        // Step 8: Adjust signs
+        adjust_signs(C, M, n_prime);
+
+        // Step 9: Composition
+        composition(C, carry);
+        C = final_adjust(C, carry);
+
+        return new BigInt(carry, C);
+    }
+
+    public void weightArray(int[] X, int M_prime, int n_prime) {
+        for (int j = 0; j <= X.length; j++) {
+            X[j] = (int) (Math.pow(2, (j* M_prime)) * X[j]) % (int) (Math.pow(2, n_prime) + 1);
+        }
+    }
+
+    public void dyadic(int[] A, int[] B, int n_prime) {
+        for (int j = 0; j < A.length; j++) {
+            A[j] = (int) ((long) A[j] * B[j]) % (int) (Math.pow(2, n_prime) + 1);
+        }
+    }
+
+    public void normalization(int[] A, int[] C, int k, int M_prime, int n_prime) {
+        int D = A.length;
+        for (int j = 0; j < D; j++) {
+            C[j] = (A[D-j-1] / (int) Math.pow(2, k + j*M_prime)) % (int) (Math.pow(2, n_prime) + 1);
+        }
+    }
+
+    public void adjust_signs(int[] C, int M, int n_prime) {
+        for (int j = 0; j < C.length; j++) {
+            if (C[j] > (j+1) * ((int) Math.pow(2, n_prime) + 1)) {
+                C[j] = C[j] - ((int) Math.pow(2, n_prime) + 1);
+            }
+        }
+    }
+
+    public void composition(int[] C, int carry) {
+        carry = 0;
+        int v;
+        for (int j = 0; j < C.length; j++) {
+            v = C[j] + carry;
+            C[j] = v % 2;
+            carry = (int) Math.floor(v / 2.0);
+        }
+    }
+
+    public int[] final_adjust(int[] C, int carry) {
+        // TODO: This is a placeholder, need to see if you have to return all carries or final carry
+        return C;
+//        if (carry != 0) {
+//            ArrayList<Integer> new_c = new ArrayList<Integer>(C);
+//            new_c.add(carry);
+//            C = new_c;
+//        }
     }
 
     // Recursive FFT
@@ -43,7 +118,6 @@ public class BigInt {
             Y[base] = A[base];
             return;
         }
-        inverseShuffle(A, n, base);           // inverse shuffle to separate evens and odds
         FFT(A, root, n / 2, base, Y);          // results in Y[base] to Y[base+n/2-1]
         FFT(A, root, n / 2, base + n / 2, Y); // results in Y[base+n/2] to Y[base+n-1]
         int j = A.length / n;
@@ -148,5 +222,9 @@ public class BigInt {
             carry = A[i] >>> ENTRYSIZE;
             A[i] = A[i] - (carry << ENTRYSIZE);
         }
+    }
+
+    private double log2(int x) {
+        return Math.log(x) / Math.log(2.0);
     }
 }
