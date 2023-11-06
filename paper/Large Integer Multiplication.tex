@@ -163,11 +163,11 @@ def left_to_right(x: list[int]) -> str:
     """Take a least significant first digit set and return a string representation of the number."""
     return "".join(str(d) for d in x[::-1])
     
-def zero_pad(lst, length, pad=0):
+def zero_pad(x: list[int], n: int, pad: int=0) -> list[int]:
     """Zero pad a list to the given length."""
-    return [pad] * (length - len(lst)) + lst
+    return [pad] * (n - len(x)) + x
 
-def grade_school_multiplication(X, Y):
+def grade_school_multiplication(X: list[int], Y: list[int]) -> list[int]:
     # Pad the shorter list with zeros to match the lengths
     n = max(len(X), len(Y))
     X = zero_pad(X, n)
