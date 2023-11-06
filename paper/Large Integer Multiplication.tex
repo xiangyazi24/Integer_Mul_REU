@@ -9,6 +9,9 @@
 \usepackage{algorithm}			% Algorithms/pseudocode
 \usepackage{algpseudocode}		% Pseudocode
 \usepackage{minted}				% Code highlighting
+\usepackage{biblatex}			% To create bibliography
+\addbibresource{citation.bib}	% Citation reference for bibliography
+\usepackage[group-separator={\,}]{siunitx} 	% Formatting numbers (use spaces, not commas)
 
 %--------Theorem Environments--------
 %theoremstyle{plain} --- default
@@ -41,8 +44,7 @@
 \makeatother
 \numberwithin{equation}{section}
 
-
-\bibliographystyle{plain}
+\bibstyle{plain}
 
 %--------Meta Data: Fill in your info------
 \title{Large Integer Multiplication:\\A Friendly Introduction\\to Select Multiplication Algorithms}
@@ -65,14 +67,14 @@ How do computers multiply integers larger than the number of bits within dedicat
 
 \section{Introduction}
 
-The title of the paper is a tribute to Dr. Silverman's wonderful \textit{A Friendly Introduction to Number Theory}. We will start with grade school multiplication, then cover the first advance in nearly 4000 years (TODO: Ref History of Mathematics), Karatsuba's algorithm. Next we will discuss the Toom Cook algorithm that is a variation on Karatsuba's algorithm. Then we turn to the DFT and FFT as a foundation to understand how to multiply numbers using the algorithms. Finally, we cover the Sch\"{o}nhageStrassen multiplication algorithm, which gets us to $\mathcal{O}(n \log n \log \log n)$ time complexity.
+The title of the paper is a tribute to Dr. Silverman's wonderful \textit{A Friendly Introduction to Number Theory}. We will start with grade school multiplication, then cover the first advance in nearly 4000 years \cite{burton1985history}, Karatsuba's algorithm. Next we will discuss the Toom Cook algorithm that is a variation on Karatsuba's algorithm. Then we turn to the DFT and FFT as a foundation to understand how to multiply numbers using the algorithms. Finally, we cover the Sch\"{o}nhageStrassen multiplication algorithm, which gets us to $\mathcal{O}(n \log n \log \log n)$ time complexity.
 
 \section{Grade School Multiplication}
-Multiplication dates back to at least 2000 B.C. (TODO: Ref History of Mathematics) and of course we all learn how to multiply integers in grade school. A review of this algorithm gives us a grasp of the terminology and notation we will use throughout the rest of this paper to discuss multiplication algorithms. We start with a representation for integers, which will be useful for later algorithms.
+Multiplication dates back to at least 2000 B.C. \cite{burton1985history} and of course we all learn how to multiply integers in grade school. A review of this algorithm gives us a grasp of the terminology and notation we will use throughout the rest of this paper to discuss multiplication algorithms. We start with a representation for integers, which will be useful for later algorithms.
 
 \subsection{Integer Representation \nopunct}
 
-We can express any positive integer $x$ as a summation of coefficients raised to a base power:
+We can express any positive integer $x$ as a summation of coefficients raised to a base power \cite{silverman2014friendly}:
 \begin{equation}
 	x = \sum_{i=0}^{n-1} X_iB^i.
 \end{equation}
@@ -127,6 +129,7 @@ For grade school multiplication, let us use the values $x=123$ and $y=789$ to il
 
 Expressed mathematically, we are performing the following,
 \begin{equation}
+	\label{gsmul}
 	xy = \sum_{k=0}^{n-1}\sum_{j=0}^{n-1}X_jY_kB^{j+k}.
 \end{equation}
 
@@ -193,6 +196,29 @@ def grade_school_multiplication(X: list[int], Y: list[int]) -> list[int]:
     return W
 \end{minted}
 
+\section{Chunky Grade School Multiplication}
+
+We can make a simple modification to our grade school multiplication that allows us to increase our multiplication speed by a factor of our machine's bit-length. Because this technique is generic, the exact bit-lengths involved in integer hardware multiplication aren't necessarily important. The increase comes by recognizing that instead of multiplying a single digit at a time, we can multiply chunks of digits. We will use $\num{123456} \times \num{987654} = \num{121931812224}$ to illustrate our chunky grade school multiplication algorithm improvement. 
+
+figure~\ref{fig:cgs01} shows how we can group our digits into chunks. These chunks allow fewer partial products even though we now have more total digits. The chunks "skip" base powers by grouping digits. 
+ 
+\begin{figure}[h]
+	\includegraphics{img/chunky_gs_mul_ex_01}
+	\caption{Chunky Grade School Multiplication of $\num{123456} \times \num{987654}$}
+	\label{fig:cgs01}
+\end{figure}
+
+If we group 3 digits then we are using a chunk size of 3 base powers, which we then keep track of throughout the algorithm. In actual large integer multiplication algorithms, we must be careful to guarantee that the summation of partial products for a given base power/column fits within the machine word size/bit width. Let us use the positive integer $h$ for chunk size, then we have just a small modification from equation~\ref{gsmul}, 
+
+\begin{equation}
+	xy = \sum_{k=0}^{n-1}\sum_{j=0}^{n-1}X_jY_kB^{h(j+k)}.
+\end{equation}
+
+\subsection{Algorithm \nopunct}
+\subsection{Time Complexity Analysis \nopunct}
+\subsection{Code Examples \nopunct}
+
+
 \section{Karatsuba}
 
 \subsection{Algorithm \nopunct}
@@ -234,26 +260,7 @@ thank your mentor.   ``It is a pleasure to thank my mentor,
 his/her name, for ....  ".   Or add anyone else, for example ``I thank [another participant] for helping 
 me understand [something or other]"
 
-\begin{thebibliography}{9}
-
-\bibitem{ams} http://www.ams.org/publications/authors/tex/amslatex
-
-\bibitem{amsshort}
-Michael Downes.
-Short Math Guide for \LaTeX.
-http://tex.loria.fr/general/downes-short-math-guide.pdf
-
-\bibitem{May}
-J. P. May.
-A Concise Course in Algebraic Topology.
-University of Chicago Press. 1999. 
-
-\bibitem{notsoshort}
-Tobias Oekiter, Hubert Partl, Irene Hyna and Elisabeth Schlegl.
-The Not So Short Introduction to \LaTeX 2e.
-https://tobi.oetiker.ch/lshort/lshort.pdf
-
-\end{thebibliography}
+\printbibliography
 
 \end{document}
 
