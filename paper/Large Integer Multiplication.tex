@@ -1,0 +1,255 @@
+\documentclass[psamsfonts]{amsart}
+
+%-------Packages---------
+\usepackage{amssymb,amsfonts}
+\usepackage[all,arc]{xy}
+\usepackage{enumerate}
+\usepackage{mathrsfs}
+\usepackage{graphicx}			% Insert images
+\usepackage{algorithm}			% Algorithms/pseudocode
+\usepackage{algpseudocode}		% Pseudocode
+\usepackage{minted}				% Code highlighting
+
+%--------Theorem Environments--------
+%theoremstyle{plain} --- default
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{cor}[thm]{Corollary}
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{conj}[thm]{Conjecture}
+\newtheorem{quest}[thm]{Question}
+
+\theoremstyle{definition}
+\newtheorem{defn}[thm]{Definition}
+\newtheorem{defns}[thm]{Definitions}
+\newtheorem{con}[thm]{Construction}
+\newtheorem{exmp}[thm]{Example}
+\newtheorem{exmps}[thm]{Examples}
+\newtheorem{notn}[thm]{Notation}
+\newtheorem{notns}[thm]{Notations}
+\newtheorem{addm}[thm]{Addendum}
+\newtheorem{exer}[thm]{Exercise}
+
+\theoremstyle{remark}
+\newtheorem{rem}[thm]{Remark}
+\newtheorem{rems}[thm]{Remarks}
+\newtheorem{warn}[thm]{Warning}
+\newtheorem{sch}[thm]{Scholium}
+
+\makeatletter
+\let\c@equation\c@thm
+\makeatother
+\numberwithin{equation}{section}
+
+
+\bibliographystyle{plain}
+
+%--------Meta Data: Fill in your info------
+\title{Large Integer Multiplication:\\A Friendly Introduction\\to Select Multiplication Algorithms}
+
+\author{JT Miller}
+
+\date{December 8, 2023}
+
+\begin{document}
+
+\begin{abstract}
+
+How do computers multiply integers larger than the number of bits within dedicated hardware? This paper provides a survey of several large integer multiplication algorithms that answer this question. The aim of the paper is to provide a friendly introduction with many examples such that undergraduate students can look past the complexity of these algorithms, grasp the fundamentals, and hopefully understand some of the beauty and wonder in the algorithms. 
+
+\end{abstract}
+
+\maketitle
+
+\tableofcontents
+
+\section{Introduction}
+
+The title of the paper is a tribute to Dr. Silverman's wonderful \textit{A Friendly Introduction to Number Theory}. We will start with grade school multiplication, then cover the first advance in nearly 4000 years (TODO: Ref History of Mathematics), Karatsuba's algorithm. Next we will discuss the Toom Cook algorithm that is a variation on Karatsuba's algorithm. Then we turn to the DFT and FFT as a foundation to understand how to multiply numbers using the algorithms. Finally, we cover the Sch\"{o}nhageStrassen multiplication algorithm, which gets us to $\mathcal{O}(n \log n \log \log n)$ time complexity.
+
+\section{Grade School Multiplication}
+Multiplication dates back to at least 2000 B.C. (TODO: Ref History of Mathematics) and of course we all learn how to multiply integers in grade school. A review of this algorithm gives us a grasp of the terminology and notation we will use throughout the rest of this paper to discuss multiplication algorithms. We start with a representation for integers, which will be useful for later algorithms.
+
+\subsection{Integer Representation \nopunct}
+
+We can express any positive integer $x$ as a summation of coefficients raised to a base power:
+\begin{equation}
+	x = \sum_{i=0}^{n-1} X_iB^i.
+\end{equation}
+Given a base system and coefficients, we can express $x$ as a coefficient vector with $n$ entries: 
+\begin{equation}
+	\mathbf{X}=\{X_0, X_1, X_2, ..., X_{n-1}\}.
+\end{equation}
+E.g. we can represent the number $40342$ as 
+\begin{equation}
+	\mathbf{X}=\{2, 4, 3, 0, 4\}
+\end{equation}
+and in base 10 we would have 
+\begin{equation}
+	2 \cdot 10^0 + 4 \cdot 10^1 + 3 \cdot 10^2 + 0 \cdot 10^3 + 4 \cdot 10^4 =40342.
+\end{equation}
+
+Note that our coefficients for powers appear "backward" in the set/array, as lower-powered coefficients appear first, but we naturally write higher-power to lower-power coefficients left to right when expressing numbers. Even from this simple idea, we can make a few observations that will prove useful later. Given two positive integers $x$ and $y$, with one integer having fewer coefficients, we can still express the integers as vectors of the same length by zero-padding the smaller integer. E.g. let $x=389$ and $y=4$, then we can simply say $\mathbf{X}=\{9, 8, 3\}$ and $\mathbf{Y}=\{4, 0, 0\}$. If the larger integer has $n$ coefficients, we now have two integers with $n$ coefficients.
+
+How many coefficients are necessary to store the result of two $n$-digit positive integers? 
+\begin{lem}
+	Multiplying two $n$-digit positive integers requires no more than $2n$ coefficients. 
+\end{lem}
+\begin{proof}
+	Let $x$ be an $n$-digit positive integer in positive base $B$. 
+	\begin{align}
+		x & \leq B^n-1 \\
+		x^2 & \leq ({B^n-1})^2 \\
+		x^2 & \leq B^{2n} - 2B^n + 1 \label{max_base_number}
+	\end{align}
+	$2B^n > 1$ for all $B>0$, so we may simplify the right side of equation~\ref{max_base_number} to 
+	\begin{align}
+		x^2 & < B^{2n}
+	\end{align}
+\end{proof}
+Let's work an example multiplying $9999 \times 9999 = 99980001$ in base 10. We have $B=10$ and $n=4$. In this case, we are using the maximum value ($9999$) that can be represented in base 10 with 4 digits. We can simply use equation~\ref{max_base_number} directly and compute $x^2$.
+\begin{align*}
+	x^2 &= B^{2n} - 2B^n + 1 \\
+	x^2 &= 10^8 - 2 \cdot 10^4 + 1 \\
+	x^2 &= 99980001
+\end{align*}
+
+Let us now discuss our (modified) grade school multiplication algorithm.
+
+\subsection{Algorithm \nopunct}
+
+For grade school multiplication, let us use the values $x=123$ and $y=789$ to illustrate our algorithm. Instead of simply multiplying the ones' digits $9$ and $3$ and writing the new ones' digit $7$ and carrying the $2$, we will write the individual products in each "column" corresponding to the base power, as shown in Figure~\ref{fig:gs01}. After we have computed all partial products, we add the partial products within each "column" or base power. Finally, we carry any overflow of partial products to the next column/base power, and we have our summation of final products yielding the answer $97047$. 
+\begin{figure}[h]
+	\includegraphics{img/gs_multiplication_ex_01}
+	\caption{Grade School Multiplication of $123 \times 789$}
+	\label{fig:gs01}
+\end{figure}
+
+Expressed mathematically, we are performing the following,
+\begin{equation}
+	xy = \sum_{k=0}^{n-1}\sum_{j=0}^{n-1}X_jY_kB^{j+k}.
+\end{equation}
+
+Now, let us determine an algorithm for performing our grade school multiplication. 
+
+\begin{algorithm}
+	\caption{Grade School Multiplication}
+	\label{gs_mult_algo}
+	\begin{algorithmic}
+	\For{$j \in \{0,1,...,n-1\}$}
+		\For{$k \in \{0,1,...,n-1\}$}
+			\State {$w[j+k] += X_jY_kB^{j+k}$}
+		\EndFor
+	\EndFor
+	$c = 0$
+	\For{$j \in \{0,1,...,2n-2\}$}
+		\If{$w[j] \geq B$}
+			\State $c = \lfloor w[j] / B \rfloor$
+			\State w[j+1] += c
+		\EndIf
+	\EndFor
+	\State return $w$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Time Complexity Analysis \nopunct}
+
+We will not belabor the time-complexity analysis to determine exact counts of the operations involved. In general additions are easier for computers, so we will typically only care about the number of necessary multiplications. From figure~\ref{fig:gs01} we can see that for $n$ digits, we have $n \times n$ partial products to compute. Accordingly, our grade school multiplication algorithm yields $\mathscr{O}(n^2)$.
+
+\subsection{Code Examples \nopunct}
+
+\begin{minted}{python}
+	def pad_list(lst, length, pad=0):
+	"""Pad the list to the given length with the pad value."""
+	return [pad] * (length - len(lst)) + lst
+	
+	def grade_school_multiplication(X, Y):
+	# Pad the shorter list with zeros to match the lengths
+	max_length = max(len(X), len(Y))
+	X = pad_list(X, max_length)
+	Y = pad_list(Y, max_length)
+	
+	# Initialize the result list W with zeros, length should be 2 * max_length
+	W = [0] * (2 * max_length)
+	
+	# Perform the multiplication using a double for loop
+	for j in range(len(X)):
+	for k in range(len(Y)):
+	W[j + k] += X[j] * Y[k]
+	
+	# Handle carries from the least significant digit to the most
+	for i in range(len(W) - 1):
+	carry, W[i] = divmod(W[i], 10)
+	W[i + 1] += carry
+	
+	# Remove excess leading zeros, if any, but leave at least one digit
+	while len(W) > 1 and W[-1] == 0:
+	W.pop()
+	
+	return W
+\end{minted}
+
+\section{Karatsuba}
+
+\subsection{Algorithm \nopunct}
+\subsection{Time Complexity Analysis \nopunct}
+\subsection{Code Examples \nopunct}
+
+\section{Toom Cook}
+
+\subsection{Algorithm \nopunct}
+\subsection{Time Complexity Analysis \nopunct}
+\subsection{Code Examples \nopunct}
+
+\section{The DFT and FFT}
+
+\subsection{Algorithm \nopunct}
+\subsection{Time Complexity Analysis \nopunct}
+\subsection{Code Examples \nopunct}
+
+\section{Multiplication via the Complex FFT}
+
+\subsection{Algorithm \nopunct}
+\subsection{Time Complexity Analysis \nopunct}
+\subsection{Code Examples \nopunct}
+
+\section{Modulo Arithmetic}
+
+\section{Sch\"{o}nhage-Strassen}
+
+\subsection{Algorithm \nopunct}
+\subsection{Time Complexity Analysis \nopunct}
+\subsection{Code Examples \nopunct}
+
+\section{O(n log n)}
+
+\section{Conclusion}
+
+\section*{Acknowledgments}  You should thank anyone who deserves thanks, and for sure you should
+thank your mentor.   ``It is a pleasure to thank my mentor, 
+his/her name, for ....  ".   Or add anyone else, for example ``I thank [another participant] for helping 
+me understand [something or other]"
+
+\begin{thebibliography}{9}
+
+\bibitem{ams} http://www.ams.org/publications/authors/tex/amslatex
+
+\bibitem{amsshort}
+Michael Downes.
+Short Math Guide for \LaTeX.
+http://tex.loria.fr/general/downes-short-math-guide.pdf
+
+\bibitem{May}
+J. P. May.
+A Concise Course in Algebraic Topology.
+University of Chicago Press. 1999. 
+
+\bibitem{notsoshort}
+Tobias Oekiter, Hubert Partl, Irene Hyna and Elisabeth Schlegl.
+The Not So Short Introduction to \LaTeX 2e.
+https://tobi.oetiker.ch/lshort/lshort.pdf
+
+\end{thebibliography}
+
+\end{document}
+
