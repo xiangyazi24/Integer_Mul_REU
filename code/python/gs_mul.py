@@ -1,10 +1,12 @@
 def left_to_right(x: list[int]) -> str:
     """Take a least significant first digit set and return a string representation of the number."""
     return "".join(str(d) for d in x[::-1])
-    
-def zero_pad(x: list[int], n: int, pad: int=0) -> list[int]:
+
+
+def zero_pad(x: list[int], n: int, pad: int = 0) -> list[int]:
     """Zero pad a list to the given length."""
     return [pad] * (n - len(x)) + x
+
 
 def grade_school_multiplication(X: list[int], Y: list[int]) -> list[int]:
     # Pad the shorter list with zeros to match the lengths
@@ -31,15 +33,17 @@ def grade_school_multiplication(X: list[int], Y: list[int]) -> list[int]:
 
     return W
 
+
 def chunkify(x: list[int], h: int) -> list[int]:
     """Split a list into chunks of size n."""
     if len(x) % h != 0:
         raise ValueError(f"Length of list must be a multiple of {h}, {len(x)} is not!")
     n = len(x) // h
-    chunks = [0]*n
+    chunks = [0] * n
     for ix, val in enumerate(x):
-        chunks[ix // h] += val * 10**(ix % h)
+        chunks[ix // h] += val * 10 ** (ix % h)
     return chunks
+
 
 def chunky_grade_school_multiplication(X: list[int], Y: list[int], h: int) -> list[int]:
     # Pad the shorter list with zeros to match the lengths
@@ -50,7 +54,7 @@ def chunky_grade_school_multiplication(X: list[int], Y: list[int], h: int) -> li
     # Verify X and Y are chunkable
     if len(X) % h != 0:
         raise ValueError(f"Length of X must be a multiple of {h}, {len(X)} is not!")
-    
+
     # Chunkify X and Y
     X = chunkify(X[:], h)
     Y = chunkify(Y[:], h)
@@ -79,8 +83,8 @@ def chunky_grade_school_multiplication(X: list[int], Y: list[int], h: int) -> li
 
 if __name__ == "__main__":
     # Grade School Multiplication
-    X = [3,2,1]
-    Y = [9,8,7]
+    X = [3, 2, 1]
+    Y = [9, 8, 7]
     W = grade_school_multiplication(X, Y)
 
     print(f"X = {X} ({left_to_right(X)})")
@@ -88,13 +92,13 @@ if __name__ == "__main__":
     print(f"W = {W} ({left_to_right(W)})")
 
     # Chunky Grade School Multiplication
-    X = [6,5,4,3,2,1]
+    X = [6, 5, 4, 3, 2, 1]
     X_chunks = chunkify(X, 3)
     print(f"X = {X} ({left_to_right(X)})")
     print(f"X_chunks = {X_chunks} ({left_to_right(X_chunks)})")
 
-    X = [6,5,4,3,2,1]
-    Y = [4,5,6,7,8,9]
+    X = [6, 5, 4, 3, 2, 1]
+    Y = [4, 5, 6, 7, 8, 9]
     W = chunky_grade_school_multiplication(X, Y, 3)
 
     print(f"X = {X} ({left_to_right(X)})")

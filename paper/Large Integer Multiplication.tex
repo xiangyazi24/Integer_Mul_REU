@@ -1,4 +1,4 @@
-\documentclass[psamsfonts]{amsart}
+\documentclass[psamsfonts,reqno]{amsart}
 
 %-------Packages---------
 \usepackage{amssymb,amsfonts}
@@ -12,6 +12,7 @@
 \usepackage{biblatex}			% To create bibliography
 \addbibresource{citation.bib}	% Citation reference for bibliography
 \usepackage[group-separator={\,}]{siunitx} 	% Formatting numbers (use spaces, not commas)
+\newcommand{\Mod}[1]{\ (\mathrm{mod}\ #1)}
 
 %--------Theorem Environments--------
 %theoremstyle{plain} --- default
@@ -141,17 +142,16 @@ Now, let us determine an algorithm for performing our grade school multiplicatio
 	\begin{algorithmic}
 	\For{$j \in \{0,1,...,n-1\}$}
 		\For{$k \in \{0,1,...,n-1\}$}
-			\State {$w[j+k] += X_jY_kB^{j+k}$}
+			\State {$W[j+k] += X_jY_kB^{j+k}$}
 		\EndFor
 	\EndFor
-	$c = 0$
+	\State $c = 0$
 	\For{$j \in \{0,1,...,2n-2\}$}
-		\If{$w[j] \geq B$}
-			\State $c = \lfloor w[j] / B \rfloor$
-			\State w[j+1] += c
-		\EndIf
+		\State $c = W[j] \Mod{B}$				
+		\State $W[j] = \lfloor W[j] / B \rfloor$
+		\State $W[j+1] += c$
 	\EndFor
-	\State return $w$
+	\State return $W$
 \end{algorithmic}
 \end{algorithm}
 
@@ -163,7 +163,8 @@ We will not belabor the time-complexity analysis to determine exact counts of th
 
 \begin{minted}{python}
 def left_to_right(x: list[int]) -> str:
-    """Take a least significant first digit set and return a string representation of the number."""
+    """Take a least significant first digit set and return a string representation
+    of the number."""
     return "".join(str(d) for d in x[::-1])
     
 def zero_pad(x: list[int], n: int, pad: int=0) -> list[int]:
@@ -215,9 +216,100 @@ If we group 3 digits then we are using a chunk size of 3 base powers, which we t
 \end{equation}
 
 \subsection{Algorithm \nopunct}
+
+\begin{algorithm}
+	\caption{Chunkify}
+	\label{chunkify}
+	\begin{algorithmic}
+		\State Pick a chunk size $h > 1$
+		\State Pad $X, \; Y$ to $kh$ where $k$ is a positive integer
+		\State $n = len(X)/h$
+		\State $X_{chunky} = \{0, 0, ..., 0\}$
+		\State $Y_{chunky} = \{0, 0, ..., 0\}$
+		\For{$j \in \{0,1,...,nh-1\}$}
+			\State $X_{chunky}[\lfloor j/h \rfloor] += X[j] * 10^{j \Mod{h}}$
+			\State $Y_{chunky}[\lfloor j/h \rfloor] += X[j] * 10^{j \Mod{h}}$
+		\EndFor
+		\State return $X_{chunky}, \; Y_{chunky}$
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+	\caption{Chunky Grade School Multiplication}
+	\label{chunky_gs_mult_algo}
+	\begin{algorithmic}
+		\For{$j \in \{0,1,...,n-1\}$}
+			\For{$k \in \{0,1,...,n-1\}$}
+				\State {$W[j+k] += X_jY_kB^{j+k}$}
+			\EndFor
+		\EndFor
+		\State $c = 0$
+		\For{$j \in \{0,1,...,2n-2\}$}
+			\State $c = W[j] \Mod{B^h}$				
+			\State $W[j] = \lfloor W[j] / B^h \rfloor$
+			\State $W[j+1] += c$
+		\EndFor
+		\State return $W$
+	\end{algorithmic}
+\end{algorithm}
+
 \subsection{Time Complexity Analysis \nopunct}
+
+From figure~\ref{fig:cgs01} we can see that we have reduced from $n \times n$ operations to $n/h \times n/h$ operations, which can be a significant real reduction, but still results in a run time of $\mathscr{O}(n^2)$.
+
 \subsection{Code Examples \nopunct}
 
+\begin{minted}{python}
+def chunkify(x: list[int], h: int) -> list[int]:
+    """Split a list into chunks of size n."""
+    if len(x) % h != 0:
+        raise ValueError(f"Length of list must be a multiple of {h}, \
+        	{len(x)} is not!")
+    n = len(x) // h
+    chunks = [0] * n
+    for ix, val in enumerate(x):
+        chunks[ix // h] += val * 10 ** (ix % h)
+    return chunks
+
+
+def chunky_grade_school_multiplication(
+	X: list[int], Y: list[int], h: int
+) -> list[int]:
+    # Pad the shorter list with zeros to match the lengths
+    n = max(len(X), len(Y))
+    X = zero_pad(X, n)
+    Y = zero_pad(Y, n)
+
+    # Verify X and Y are chunkable
+    if len(X) % h != 0:
+        raise ValueError(f"Length of X must be a multiple of {h}, \
+        	{len(X)} is not!")
+
+    # Chunkify X and Y
+    X = chunkify(X[:], h)
+    Y = chunkify(Y[:], h)
+
+    n = len(X_chunks)
+
+    # Initialize the result list W with zeros, length should be 2 * n
+    W = [0] * (2 * n)
+
+    # Multiply all partial products and add them to W
+    for j in range(len(X)):
+        for k in range(len(Y)):
+            W[j + k] += X[j] * Y[k]
+
+    # Handle carries from least significant to most significant digit
+    for i in range(len(W) - 1):
+        carry, W[i] = divmod(W[i], 10**h)
+        W[i + 1] += carry
+
+    # Remove excess leading zeros, if any, but leave at least one digit
+    while len(W) > 1 and W[-1] == 0:
+        W.pop()
+
+    return W
+\end{minted}
 
 \section{Karatsuba}
 
