@@ -157,7 +157,7 @@ Now, let us determine an algorithm for performing our grade school multiplicatio
 
 \subsection{Time Complexity Analysis \nopunct}
 
-We will not belabor the time-complexity analysis to determine exact counts of the operations involved. In general additions are easier for computers, so we will typically only care about the number of necessary multiplications. From figure~\ref{fig:gs01} we can see that for $n$ digits, we have $n \times n$ partial products to compute. Accordingly, our grade school multiplication algorithm yields $\mathscr{O}(n^2)$.
+We will not belabor the time-complexity analysis to determine exact counts of the operations involved. In general additions are easier for computers, so we will typically only care about the number of necessary multiplications. From Figure~\ref{fig:gs01} we can see that for $n$ digits, we have $n \times n$ partial products to compute. Accordingly, our grade school multiplication algorithm yields $\mathscr{O}(n^2)$.
 
 \subsection{Code Examples \nopunct}
 
@@ -201,7 +201,7 @@ def grade_school_multiplication(X: list[int], Y: list[int]) -> list[int]:
 
 We can make a simple modification to our grade school multiplication that allows us to increase our multiplication speed by a factor of our machine's bit-length. Because this technique is generic, the exact bit-lengths involved in integer hardware multiplication aren't necessarily important. The increase comes by recognizing that instead of multiplying a single digit at a time, we can multiply chunks of digits. We will use $\num{123456} \times \num{987654} = \num{121931812224}$ to illustrate our chunky grade school multiplication algorithm improvement. 
 
-figure~\ref{fig:cgs01} shows how we can group our digits into chunks. These chunks allow fewer partial products even though we now have more total digits. The chunks "skip" base powers by grouping digits. 
+Figure~\ref{fig:cgs01} shows how we can group our digits into chunks. These chunks allow fewer partial products even though we now have more total digits. The chunks "skip" base powers by grouping digits. 
  
 \begin{figure}[h]
 	\includegraphics{img/chunky_gs_mul_ex_01}
@@ -255,7 +255,7 @@ If we group 3 digits then we are using a chunk size of 3 base powers, which we t
 
 \subsection{Time Complexity Analysis \nopunct}
 
-From figure~\ref{fig:cgs01} we can see that we have reduced from $n \times n$ operations to $n/h \times n/h$ operations, which can be a significant real reduction, but still results in a run time of $\mathscr{O}(n^2)$.
+From Figure~\ref{fig:cgs01} we can see that we have reduced from $n \times n$ operations to $n/h \times n/h$ operations, which can be a significant real reduction, but still results in a run time of $\mathscr{O}(n^2)$.
 
 \subsection{Code Examples \nopunct}
 
@@ -312,12 +312,48 @@ def chunky_grade_school_multiplication(
 \end{minted}
 
 \section{Karatsuba}
-We now turn our attention to Karatsuba's algorithm. In 1960, Andrey Kolmogorov conjectured that $\mathscr{O}(n^2)$ was as fast as multiplication could be achieved. Kolmogorov held a seminar at Moscow University where he presented this and other conjectures. Anatoly Karatsuba, a 23-year-old student, found a divide and conquer method that multiplies numbers in $\mathscr{O}(n^{\log_2 3})$ which he presented at the next seminar, which was then disbanded (TODO: INSERT REFERENCE HERE). 
+We now turn our attention to Karatsuba's algorithm. In 1960, Andrey Kolmogorov conjectured that $\mathscr{O}(n^2)$ was as fast as multiplication could be achieved. Kolmogorov held a seminar at Moscow University where he presented this and other conjectures. Anatoly Karatsuba, a 23-year-old student, found a divide and conquer method that multiplies numbers in $\mathscr{O}(n^{\log_2 3})$ that he presented at the next seminar, which was then disbanded (TODO: INSERT REFERENCE HERE). Perhaps the best way to motivate some is to say that something is impossible.
 
 \subsection{Algorithm \nopunct}
+Karatsuba's algorithm involves manipulating the partial products involved in multiplication, a divide and conquer approach. Let the tens' and ones' digits of $x$ to be $ab$, or $X_1 = a$, and $X_0 = b$ from our previous discussions. Similarly, let the tens and ones' digits of $y$ be $cd$, or $Y_1 = c$ and $Y_0 = d$. Figure~\ref{fig:gs_abcd} shows this simple grade school multiplication. 
 
+\begin{figure}[h]
+	\includegraphics{img/gs_abcd}
+	\caption{Grade School $abcd$ Multiplication}
+	\label{fig:gs_abcd}
+\end{figure}
+
+Note that we are neglecting the base. Figure~\ref{fig:gs_abcdz} shows the same multiplication with our base $z$ included. 
+
+\begin{figure}[h]
+	\includegraphics{img/gs_abcdz}
+	\caption{Grade School $abcdz$ Multiplication (includes base $z$)}
+	\label{fig:gs_abcdz}
+\end{figure}
+
+Karatsuba recognized that the multiplication of partial products, $(a+b)(c+d)=ac+(ad+bc)+bd$ could be manipulated to yield three multiplications instead of four. $ac$ is one multiplication, $bd$ is the second, and then we can use the fact that $(ad+bc) = (a+b)(c+d) - (ac + bd)$ for the third multiplication. We now have all the partial products necessary, having deconstructed the addition of partial products. At the cost of a few more additions and subtractions, we can remove one multiplication. Figure~\ref{fig:abcd_equation} shows this simple coefficient manipulation with the multiplications numbered at the bottom of equations and the "free" multiplication shown.
+
+\begin{figure}[h]
+	\includegraphics{img/abcd_equation}
+	\caption{Karatsuba's Manipulation of Coefficients}
+	\label{fig:abcd_equation}
+\end{figure}
+
+Figure~\ref{fig:karatsuba_example} shows an example for $25786109 \times 72166948 = 1860904787325332$ with the same coloring used to denote $abcd$ as the previous explanations. Note that we have combined the algorithm with chunking (typically this is referred to as blocking, but the term chunking is more fun) that combines several coefficients. 
+
+\begin{figure}[h]
+	\includegraphics{img/karatsuba_example}
+	\caption{Karatsuba Example}
+	\label{fig:karatsuba_example}
+\end{figure}
+
+Karatsuba's three coefficient products, $ac$, $bd$, and $(a+b)(c+d)$, can be used to recursively subdivide the problem further.
 
 \subsection{Time Complexity Analysis \nopunct}
+
+As we noted above, because Karatsuba allows recursively subdividing the problem using coefficient products, the runtime for products is $\mathscr{O}(n^{\log_2{3}})$. $\log_2{3} \approxeq 1.58$, so the runtime complexity of Karatsuba's algorithm is commonly referred to as $\mathscr{O}(n^{1.58})$. 
+
+
 \subsection{Code Examples \nopunct}
 
 \section{Toom Cook}
