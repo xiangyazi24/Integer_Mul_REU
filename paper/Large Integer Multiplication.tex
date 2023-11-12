@@ -347,12 +347,17 @@ Figure~\ref{fig:karatsuba_example} shows an example for $25786109 \times 7216694
 	\label{fig:karatsuba_example}
 \end{figure}
 
-Karatsuba's three coefficient products, $ac$, $bd$, and $(a+b)(c+d)$, can be used to recursively subdivide the problem further.
+Karatsuba's three coefficient products, $ac$, $bd$, and $(a+b)(c+d)$, can be used to recursively subdivide the problem further. Although not necessary (we could have used more coefficients and a larger base power), Figure~\ref{fig:karatsuba_large_example} shows a larger Karatsuba example where we recursively apply Karatsuba to coefficients. Note that we dispense with the summation of partial products after the first stage as the quantities become cumbersome to print. 
+
+\begin{figure}[h]
+	\includegraphics{img/karatsuba_large_example}
+	\caption{Larger Karatsuba Example}
+	\label{fig:karatsuba_large_example}
+\end{figure}
 
 \subsection{Time Complexity Analysis \nopunct}
 
-As we noted above, because Karatsuba allows recursively subdividing the problem using coefficient products, the runtime for products is $\mathscr{O}(n^{\log_2{3}})$. $\log_2{3} \approxeq 1.58$, so the runtime complexity of Karatsuba's algorithm is commonly referred to as $\mathscr{O}(n^{1.58})$. 
-
+As we noted above, because Karatsuba allows recursively subdividing the problem using coefficient products, the runtime for products is $\mathscr{O}(n^{\log_2{3}})$. $\log_2{3} \approxeq 1.585$, so the runtime complexity of Karatsuba's algorithm is commonly referred to as $\mathscr{O}(n^{1.585})$. 
 
 \subsection{Code Examples \nopunct}
 

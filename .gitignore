@@ -1,4 +1,12 @@
+.gitignore~
+*.gitignore.un~
 *.bbl
 *.bcf
 *.blg
 *.xml
+*.asv
+*.un~
+*.swp
+*.~vsdx
+.vscode
+.idea
