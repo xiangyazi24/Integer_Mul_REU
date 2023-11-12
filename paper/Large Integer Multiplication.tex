@@ -72,7 +72,7 @@ Large integer multiplication is pervasive in our lives in the form of cryptograp
 
 How do computers multiply integers larger than the number of bits within dedicated hardware? This paper provides a survey of several large integer multiplication algorithms that answer this question. The aim of the paper is to provide a friendly introduction with many examples such that undergraduate students can look past the complexity of these algorithms, grasp the fundamentals, and hopefully understand some of the beauty in the algorithms. 
 
-The title of the paper is a tribute to Dr. Silverman's wonderful \textit{A Friendly Introduction to Number Theory}. We will start with grade school multiplication, then cover a simple but useful extension that allows multiplication in "chunks". We then cover the first advance in nearly 4000 years \cite{burton1985history}, Karatsuba's algorithm. Next we will discuss the Toom Cook algorithm that is a generalization of Karatsuba's algorithm. Next we cover the fundamentals of the Discrete Fourier Transform (DFT) and Fast Fourier Transform (FFT) to understand how these algorithms are used to multiply large integers. Finally, we cover the Sch\"{o}nhage-Strassen multiplication algorithm, which gets us to $\mathcal{O}(n \log n \log \log n)$ time complexity.
+The title of the paper is a tribute to Dr. Silverman's wonderful \textit{A Friendly Introduction to Number Theory}. We will start with grade school multiplication, then cover a simple but useful extension that allows multiplication in ``chunks''. We then cover the first advance in nearly 4000 years \cite{burton1985history}, Karatsuba's algorithm. Next we will discuss the Toom-Cook algorithm that is a generalization of Karatsuba's algorithm. Next we cover the fundamentals of the Discrete Fourier Transform (DFT) and Fast Fourier Transform (FFT) to understand how these algorithms are used to multiply large integers. Finally, we cover the Sch\"{o}nhage-Strassen multiplication algorithm, which gets us to $\mathcal{O}(n \log n \log \log n)$ time complexity.
 
 \section{Grade School Multiplication}
 Multiplication dates back to at least 2000 B.C. \cite{burton1985history} and of course we all learn how to multiply integers in grade school. A review of this algorithm gives us a grasp of the terminology and notation we will use throughout the rest of this paper to discuss multiplication algorithms. We start with a representation for integers, which will be useful for later algorithms.
@@ -96,7 +96,7 @@ and in base 10 we would have
 	2 \cdot 10^0 + 4 \cdot 10^1 + 3 \cdot 10^2 + 0 \cdot 10^3 + 4 \cdot 10^4 =40342.
 \end{equation}
 
-Note that our coefficients for powers appear "backward" in the set/array, as lower-powered coefficients appear first, but we naturally write higher-power to lower-power coefficients left to right when expressing numbers. Even from this simple idea, we can make a few observations that will prove useful later. Given two positive integers $x$ and $y$, with one integer having fewer coefficients, we can still express the integers as vectors of the same length by zero-padding the smaller integer. E.g. let $x=389$ and $y=4$, then we can simply say $\mathbf{X}=\{9, 8, 3\}$ and $\mathbf{Y}=\{4, 0, 0\}$. If the larger integer has $n$ coefficients, we now have two integers with $n$ coefficients.
+Note that our coefficients for powers appear ``backward'' in the set/array, as lower-powered coefficients appear first, but we naturally write higher-power to lower-power coefficients left to right when expressing numbers. Even from this simple idea, we can make a few observations that will prove useful later. Given two positive integers $x$ and $y$, with one integer having fewer coefficients, we can still express the integers as vectors of the same length by zero-padding the smaller integer. E.g. let $x=389$ and $y=4$, then we can simply say $\mathbf{X}=\{9, 8, 3\}$ and $\mathbf{Y}=\{4, 0, 0\}$. If the larger integer has $n$ coefficients, we now have two integers with $n$ coefficients.
 
 How many coefficients are necessary to store the result of two $n$-digit positive integers? 
 \begin{lem}
@@ -125,7 +125,7 @@ Let us now discuss our (modified) grade school multiplication algorithm.
 
 \subsection{Algorithm \nopunct}
 
-For grade school multiplication, let us use the values $x=123$ and $y=789$ to illustrate our algorithm. Instead of simply multiplying the ones' digits $9$ and $3$ and writing the new ones' digit $7$ and carrying the $2$, we will write the individual products in each "column" corresponding to the base power, as shown in Figure~\ref{fig:gs01}. After we have computed all partial products, we add the partial products within each "column" or base power. Finally, we carry any overflow of partial products to the next column/base power, and we have our summation of final products yielding the answer $97047$. 
+For grade school multiplication, let us use the values $x=123$ and $y=789$ to illustrate our algorithm. Instead of simply multiplying the ones' digits $9$ and $3$ and writing the new ones' digit $7$ and carrying the $2$, we will write the individual products in each ``column'' corresponding to the base power, as shown in Figure~\ref{fig:gs01}. After we have computed all partial products, we add the partial products within each ``column'' or base power. Finally, we carry any overflow of partial products to the next column/base power, and we have our summation of final products yielding the answer $97047$. 
 \begin{figure}[H]
 	\includegraphics{img/gs_multiplication_ex_01}
 	\caption{Grade School Multiplication of $123 \times 789$}
@@ -165,7 +165,7 @@ We will not belabor the time-complexity analysis to determine exact counts of th
 
 \subsection{Code Examples \nopunct}
 
-\begin{minted}{python}
+\begin{minted}[fontsize=\footnotesize]{python}
 def left_to_right(x: list[int]) -> str:
     """Take a least significant first digit set and return a string representation
     of the number."""
@@ -205,7 +205,7 @@ def grade_school_multiplication(X: list[int], Y: list[int]) -> list[int]:
 
 We can make a simple modification to our grade school multiplication that allows us to increase our multiplication speed by a factor of our machine's bit-length. Because this technique is generic, the exact bit-lengths involved in integer hardware multiplication aren't necessarily important. The increase comes by recognizing that instead of multiplying a single digit at a time, we can multiply chunks of digits. We will use $\num{123456} \times \num{987654} = \num{121931812224}$ to illustrate\footnote{Note that the spaces in numbers such as these are strictly for readability purposes. Numbers formatted with spaces like those in the previous multiplication are still single contiguous numbers.} our chunky grade school multiplication algorithm improvement.
 
-Figure~\ref{fig:cgs01} shows how we can group our digits into chunks. These chunks allow fewer partial products even though we now have more total digits. The chunks "skip" base powers by grouping digits. 
+Figure~\ref{fig:cgs01} shows how we can group our digits into chunks. These chunks allow fewer partial products even though we now have more total digits. The chunks ``skip'' base powers by grouping digits. 
  
 \begin{figure}[H]
 	\includegraphics{img/chunky_gs_mul_ex_01}
@@ -263,7 +263,7 @@ From Figure~\ref{fig:cgs01} we can see that we have reduced from $n \times n$ op
 
 \subsection{Code Examples \nopunct}
 
-\begin{minted}{python}
+\begin{minted}[fontsize=\footnotesize]{python}
 def chunkify(x: list[int], h: int) -> list[int]:
     """Split a list into chunks of size n."""
     if len(x) % h != 0:
@@ -335,7 +335,7 @@ Note that we are neglecting the base. Figure~\ref{fig:gs_abcdz} shows the same m
 	\label{fig:gs_abcdz}
 \end{figure}
 
-Karatsuba recognized that the multiplication of partial products, $(a+b)(c+d)=ac+(ad+bc)+bd$ could be manipulated to yield three multiplications instead of four. $ac$ is one multiplication, $bd$ is the second, and then we can use the fact that $(ad+bc) = (a+b)(c+d) - (ac + bd)$ for the third multiplication. We now have all the partial products necessary, having deconstructed the addition of partial products. At the cost of a few more additions and subtractions, we can remove one multiplication. Figure~\ref{fig:abcd_equation} shows this simple coefficient manipulation with the multiplications numbered at the bottom of equations and the "free" multiplication shown. The letters $A$-$E$ denote the arithmetic quantities we will compute during the algorithm.
+Karatsuba recognized that the multiplication of partial products, $(a+b)(c+d)=ac+(ad+bc)+bd$ could be manipulated to yield three multiplications instead of four. $ac$ is one multiplication, $bd$ is the second, and then we can use the fact that $(ad+bc) = (a+b)(c+d) - (ac + bd)$ for the third multiplication. We now have all the partial products necessary, having deconstructed the addition of partial products. At the cost of a few more additions and subtractions, we can remove one multiplication. Figure~\ref{fig:abcd_equation} shows this simple coefficient manipulation with the multiplications numbered at the bottom of equations and the ``free'' multiplication shown. The letters $A$-$E$ denote the arithmetic quantities we will compute during the algorithm.
 
 \begin{figure}[H]
 	\includegraphics{img/abcd_equation}
@@ -369,7 +369,7 @@ As we noted above, because Karatsuba allows recursively subdividing the problem 
 
 (TODO: Add python for real algorithm and discussion)
 
-\begin{minted}{matlab}
+\begin{minted}[fontsize=\footnotesize]{matlab}
 function [] = karatsuba(x, y, n)
 	a = floor(x/10^n);
 	b = mod(x,10^n);
@@ -392,13 +392,274 @@ function [] = karatsuba(x, y, n)
 end	
 \end{minted}
 
-\section{Toom Cook}
+\section{Toom-Cook}
 
+The Toom-Cook algorithm generalizes the divide and conquer approach used in Karatsuba. Instead of splitting the multiplicands into two parts, Toom-Cook splits the multiplication into $r$ parts. Toom-Cook then uses the splits as coefficients in a polynomial, as we have done before. The clever part of Toom-Cook is to use these splits parts in the $X$ and $Y$ coefficients to represent polynomials $x(t)$ and $y(t)$, then multiply those polynomials together. Because the $x(t)$ and $y(t)$ polynomials will be of degree $r-1$, their product will be of degree $r-2$, at most. We can evaluate the multiplication of $x(t)$ and $y(t)$ at $2r-1$ points to recover the product $w(t)$, of degree $2r-2$. Hence we are now multiplying together polynomials to recover integers! 
 
+Judicious selection of $r$ and the points at which we multiply the polynomials yields the best results. Toom-Cook multiplication of $n$-word numbers takes, at best, $\mathcal{O}(n^{1+1/\sqrt{\log{n}}})$ \cite{brent2010modern}.
+
+Consider that we pad the multiplicands so that we can split the multiplicand into three coefficients of equal length. We can then write our multiplicands as polynomials
+\begin{align*}
+	x(t) &= x_2t^2 + x_1t + x_0 \\
+	y(t) &= y_2t^2 + y_1t + y_0.
+\end{align*}
+
+We multiply these two polynomials to produce $w(t)$:
+\begin{equation*}
+	w(t)=x(t)*y(t).
+\end{equation*}
+
+Because we know the maximum degree of $w(t)$, we can write the polynomial's representation as
+\begin{equation*}
+	w(t) = w_4t^4 + w_3t^3 + w_2t^2 + w_1t + w_0.
+\end{equation*}
+
+We should note that $t$ is equivalent to our base, which of course may be ``chunks''. Hence $t = B^h$, and $t^k = B^{kh}$ where $k$ is some positive integer. Obviously, $w_4 = x_2y_2$, and so on:
+\begin{align*}
+	w_4 &= x_2y_2 \\
+	w_3 &= x_2y_1 + x_1y_2 \\
+	w_2 &= x_2y_0 + x_1y_1 + x_0y_2 \\
+	w_1 &= x_1y_0 + x_0y_1 \\
+	w_0 &= x_0y_0.
+\end{align*}
+
+For the Toom-Cook algorithm split into 3 parts, a popular choice for the points is $0$, $1$, $-1$, $-2$, and $\infty$. The point at infinity simply reduces to the highest level coefficient. Our equations reduce nicely using these points:
+\begin{align*}
+	x(0) &= x_2(0)^2 + x_1(0) + x_0 &&= x_0 \\
+	x(1) &= x_2(1)^2 + x_1(1) + x_0	&&= x_2 + x_1 + x_0 \\
+	x(-1) &= x_2(-1)^2 + x_1(-1) + x_0 &&= x_2 - x_1 + x_0 \\
+	x(-2) &= x_2(-2)^2 + x_1(-2) + x_0 &&= 4x_2 - 2x_1 + x_0 \\
+	x(\infty) &= x_2(\infty)^2 + x_1(\infty) + x_0 &&= x_2.
+\end{align*}
+
+We can further optimize the above arithmetic computations by saving some partially computed results\footnote{Note that $\gamma$ is simply a variable we use for the partial computation of $x_0 + x_2$, there is no other significance.} and applying to subsequent arithmetic computations:
+\begin{align}
+	\gamma &= x_0 + x_2 \label{toom_opt1} \\
+	x(0) &= x_0 \label{toom_opt2} \\
+	x(1) &= \gamma + x_1 \label{toom_opt3} \\
+	x(-1) &= \gamma - x_1 \label{toom_opt4} \\
+	x(-2) &= 2(x(-1) + x_2) - x_0 \label{toom_opt5} \\
+	x(\infty) &= x_2. \label{toom_opt6}
+\end{align}
+
+The same computations are used for $y(t)$. Now we can compute $w(t) = x(t)y(t)$. At this point, we will introduce some linear algebra that compactly shows the $2r-1$ equations we are solving and how we can obtain $w(t)$ (and the $W$s we are after) by inverting this matrix. For those unfamiliar with linear algebra, you can skip down below to where we restate $w(t)$. You can solve the simultaneous set of equations to arrive at the same point.
+\begin{align*}
+	\begin{pmatrix}
+		w(0) \\ 
+		w(1) \\
+		w(-1) \\
+		w(-2) \\
+		w(\infty)
+	\end{pmatrix}
+	&=
+	\begin{pmatrix}
+		0^0 & 0^1 & 0^2 & 0^3 & 0^4 \\
+		1^0 & 1^1 & 1^2 & 1^3 & 1^4 \\
+		(-1)^0 & (-1)^1 & (-1)^2 & (-1)^3 & (-1)^4 \\
+		(-2)^0 & (-2)^1 & (-2)^2 & (-2)^3 & (-2)^4 \\
+		0 & 0 & 0 & 0 & 1
+	\end{pmatrix}
+	\begin{pmatrix}
+		w_0 \\
+		w_1 \\
+		w_2 \\
+		w_3 \\
+		w_4
+	\end{pmatrix}
+	\\
+	&=
+	\begin{pmatrix}
+		1 & 0 & 0 & 0 & 0 \\
+		1 & 1 & 1 & 1 & 1 \\
+		1 & -1 & 1 & -1 & 1 \\
+		1 & -2 & 4 & -8 & 16 \\
+		0 & 0 & 0 & 0 & 1
+	\end{pmatrix}
+	\begin{pmatrix}
+		w_0 \\
+		w_1 \\
+		w_2 \\
+		w_3 \\
+		w_4		
+	\end{pmatrix}
+	.
+\end{align*}
+
+Because we were judicious in the choice of our evaluation points, the matrix above is invertible, and we may simply invert the matrix to solve for our coefficients directly.
+\begin{align*}
+	\begin{pmatrix}
+		w_0 \\
+		w_1 \\
+		w_2 \\
+		w_3 \\
+		w_4		
+	\end{pmatrix}
+	& =
+	\begin{pmatrix}
+		1 & 0 & 0 & 0 & 0 \\
+		1 & 1 & 1 & 1 & 1 \\
+		1 & -1 & 1 & -1 & 1 \\
+		1 & -2 & 4 & -8 & 16 \\
+		0 & 0 & 0 & 0 & 1
+	\end{pmatrix}^{-1}
+	\begin{pmatrix}
+		w(0) \\ 
+		w(1) \\
+		w(-1) \\
+		w(-2) \\
+		w(\infty)
+	\end{pmatrix}
+	\\
+	&=
+	\begin{pmatrix}
+		1 & 0 & 0 & 0 & 0 \\
+		1/2 & 1/3 & -1 & 1/6 & -2 \\
+		-1 & 1/2 & 1/2 & 0 & -1 \\
+		-1/2 & 1/6 & 1/2 & -1/6 & 2 \\
+		0 & 0 & 0 & 0 & 1
+	\end{pmatrix}
+	\begin{pmatrix}
+		w(0) \\ 
+		w(1) \\
+		w(-1) \\
+		w(-2) \\
+		w(\infty)
+	\end{pmatrix}	
+\end{align*}
+
+For our friends without linear algebra rejoining us, this is
+\begin{align*}
+	w_0 &= w(0) \\
+	w_1 &= \frac{1}{2}w(0) + \frac{1}{3}w(1) - w(-1) + \frac{1}{6}w(-2) -2w(\infty) \\
+	w_2 &= -w(0) + \frac{1}{2}w(1) + \frac{1}{2}w(-1) -w(\infty) \\
+	w_3 &= -\frac{1}{2}w(0) + \frac{1}{6}w(1) + \frac{1}{2}w(-1) - \frac{1}{6}w(-2) + 2w(\infty) \\
+	w_4 &= w(\infty)
+\end{align*}
+
+Note that we could optimize this by computing partial summations and then reusing results as we did in Equation~\ref{toom_opt1}-\ref{toom_opt6}. We leave this as an exercise for the reader. Let us compute a Toom-3 example with $\num{698310488572646777019184} \times \num{144585992498882884065634} = 
+\num{100965915062655948833325499910140535809533122656}$. Here,
+\begin{align*}
+	x_2 &= 69831048 \\
+	x_1 &= 85726467 \\
+	x_0 &= 77019184 \\
+	y_2 &= 14458599 \\
+	y_1 &= 24988828 \\
+	y_0 &= 84065634.
+\end{align*}
+
+\begin{align*}
+	content...
+\end{align*}
 
 \subsection{Algorithm \nopunct}
+
+
+
 \subsection{Time Complexity Analysis \nopunct}
+
+
+
 \subsection{Code Examples \nopunct}
+
+\begin{minted}[fontsize=\footnotesize]{python}
+def pad(x: str, h: int) -> str:
+    r = len(x) % h
+    if r != 0:
+        padding = ['0'] * (h - r)
+        return "".join(padding) + x
+    return x
+
+
+def chunkify(x: str, h: int) -> list[int]:
+    if len(x) % h != 0:
+        print(f"Length of {x} is not an integer multiple of {h}, exiting")
+        exit(1)
+    return [int(x[max(i - 8, 0):i]) for i in range(len(x), 0, -8)]
+
+
+def print_coeffs(chunks: list[int], coeff: str = 'x') -> None:
+    for ix, chunk in enumerate(chunks):
+        print(f"{coeff}_{ix} = {chunk}")
+
+
+def eval_input_poly(x: list[int]) -> list[int]:
+    """x is the coefficients, returns a list of values at our chosen Toom-3 points.
+    The points are {0, 1, -1, -2, \infty}"""
+    gamma = x[0] + x[2]
+    x_of_zero = x[0]
+    x_of_one = gamma + x[1]
+    x_of_minus_one = gamma - x[1]
+    x_of_minus_two = 2*(x_of_minus_one + x[2]) - x[0]
+    x_of_infty = x[2]
+    x_of_t = [x_of_zero, x_of_one, x_of_minus_one, x_of_minus_two, x_of_infty]
+    return x_of_t
+
+
+def multiply_points(x: list[int], y: list[int]) -> list[int]:
+    w = [0] * len(x)
+    for ix in range(len(x)):
+        w[ix] = x[ix]*y[ix]
+    return w
+
+
+def print_points(x: list[int], var: 'str') -> None:
+    print(f"{var}(0)   = {x[0]}")
+    print(f"{var}(1)   = {x[1]}")
+    print(f"{var}(-1)  = {x[2]}")
+    print(f"{var}(-2)  = {x[3]}")
+    print(f"{var}(inf) = {x[4]}")
+
+
+def interp_w(p: list[int]) -> list[int]:
+    """p is the list of points for w"""
+    w = [0] * 5
+    w[0] = p[0]
+    w[1] = (1/2)*p[0] + (1/3)*p[1] - p[2] + (1/6)*p[3] - 2*p[4]
+    w[2] = -p[0] + (1/2)*p[1] + (1/2)*p[2] - p[4]
+    w[3] = -(1/2)*p[0] + (1/6)*p[1] + (1/2)*p[2] - (1/6)*p[3] + 2*p[4]
+    w[4] = p[4]
+    for ix in range(len(w)):
+        w[ix] = int(w[ix])
+    return w
+
+def do_carries(w: list[int], h: int) -> list[int]:
+    for ix in range(len(w)-1):
+        c, w[ix] = divmod(w[ix], 10**h)
+        w[ix+1] += c
+    return w
+
+
+def print_num(num: list[int], var: str = 'w') -> None:
+    print(f"{var} = {''.join([str(x) for x in num[::-1]])}")
+
+
+if __name__ == "__main__":
+    h = 8
+
+    x = "698310488572646777019184"
+    y = "144585992498882884065634"
+    x = pad(x, h)
+    y = pad(y, h)
+    print(f"x = {x}")
+    x_chunks = chunkify(x, h)
+    print_coeffs(x_chunks, 'x')
+    print(f"y = {y}")
+    y_chunks = chunkify(y, h)
+    print_coeffs(y_chunks, 'y')
+
+    x_of_t = eval_input_poly(x_chunks)
+    y_of_t = eval_input_poly(y_chunks)
+    print_points(x_of_t, 'x')
+    print_points(y_of_t, 'y')
+
+    w_of_t = multiply_points(x_of_t, y_of_t)
+    print_points(w_of_t, 'w')
+
+    w = interp_w(w_of_t)
+
+    do_carries(w, h)
+    print_num(w)
+\end{minted}
 
 \section{The DFT and FFT}
 
