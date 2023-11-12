@@ -68,7 +68,11 @@ How do computers multiply integers larger than the number of bits within dedicat
 
 \section{Introduction}
 
-The title of the paper is a tribute to Dr. Silverman's wonderful \textit{A Friendly Introduction to Number Theory}. We will start with grade school multiplication, then cover the first advance in nearly 4000 years \cite{burton1985history}, Karatsuba's algorithm. Next we will discuss the Toom Cook algorithm that is a variation on Karatsuba's algorithm. Then we turn to the DFT and FFT as a foundation to understand how to multiply numbers using the algorithms. Finally, we cover the Sch\"{o}nhageStrassen multiplication algorithm, which gets us to $\mathcal{O}(n \log n \log \log n)$ time complexity.
+Large integer multiplication is pervasive in our lives in the form of cryptography. One need only look at the innards of any crypto library to find a BigInt library or API behind the scenes. Within those libraries/APIs are the algorithms discussed within this paper. There are other less pervasive uses, such as scientific and algorithm research, large-scale data analysis, and of course computational mathematics. 
+
+How do computers multiply integers larger than the number of bits within dedicated hardware? This paper provides a survey of several large integer multiplication algorithms that answer this question. The aim of the paper is to provide a friendly introduction with many examples such that undergraduate students can look past the complexity of these algorithms, grasp the fundamentals, and hopefully understand some of the beauty in the algorithms. 
+
+The title of the paper is a tribute to Dr. Silverman's wonderful \textit{A Friendly Introduction to Number Theory}. We will start with grade school multiplication, then cover a simple but useful extension that allows multiplication in "chunks". We then cover the first advance in nearly 4000 years \cite{burton1985history}, Karatsuba's algorithm. Next we will discuss the Toom Cook algorithm that is a generalization of Karatsuba's algorithm. Next we cover the fundamentals of the Discrete Fourier Transform (DFT) and Fast Fourier Transform (FFT) to understand how these algorithms are used to multiply large integers. Finally, we cover the Sch\"{o}nhage-Strassen multiplication algorithm, which gets us to $\mathcal{O}(n \log n \log \log n)$ time complexity.
 
 \section{Grade School Multiplication}
 Multiplication dates back to at least 2000 B.C. \cite{burton1985history} and of course we all learn how to multiply integers in grade school. A review of this algorithm gives us a grasp of the terminology and notation we will use throughout the rest of this paper to discuss multiplication algorithms. We start with a representation for integers, which will be useful for later algorithms.
@@ -361,6 +365,29 @@ As we noted above, because Karatsuba allows recursively subdividing the problem 
 
 \subsection{Code Examples \nopunct}
 
+\begin{minted}{matlab}
+function [] = karatsuba(x, y, n)
+	a = floor(x/10^n);
+	b = mod(x,10^n);
+	c = floor(y/10^n);
+	d = mod(y,10^n);
+	
+	A = a*c;
+	B = b*d;
+	C = (a+b)*(c+d);
+	D = A+B;
+	E = C - D;
+	result = A*10^(2*n) + E*10^n + B;
+	fprintf("A=%d\n", A);
+	fprintf("B=%d\n", B);
+	fprintf("C=%d\n", C);
+	fprintf("D=%d\n", D);
+	fprintf("E=%d\n", E);
+	fprintf("%d+%d+%d\n", A*10^(2*n), E*10^n, B);
+	fprintf("=%d\n\n", result);
+end	
+\end{minted}
+
 \section{Toom Cook}
 
 \subsection{Algorithm \nopunct}
@@ -391,10 +418,7 @@ As we noted above, because Karatsuba allows recursively subdividing the problem 
 
 \section{Conclusion}
 
-\section*{Acknowledgments}  You should thank anyone who deserves thanks, and for sure you should
-thank your mentor.   ``It is a pleasure to thank my mentor, 
-his/her name, for ....  ".   Or add anyone else, for example ``I thank [another participant] for helping 
-me understand [something or other]"
+\section*{Acknowledgments} I would like to extend my heartfelt thanks to Dr. Huang for allowing me to pursue an open-ended research topic and providing guidance and motivation along the way. I am aware that undergraduate research has few tangible benefits for a professor, but this has been a tremendously rewarding experience for me. Thank you for patience during the weeks where I was making no visible progress. Thank you for your mentorship and gentle steering during this research. Most of all, thank you for sharing your passion for algorithms and mathematics. That passion is infectious and has made working with you not just a rewarding, but joyful experience. 
 
 \printbibliography
 
