@@ -95,6 +95,7 @@ if __name__ == "__main__":
     print_points(w_of_t, 'w')
 
     w = interp_w(w_of_t)
+    print_coeffs(w, 'w')
 
     do_carries(w, h)
     print_num(w)

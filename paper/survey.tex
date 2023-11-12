@@ -48,7 +48,7 @@
 \bibstyle{plain}
 
 %--------Meta Data: Fill in your info------
-\title{Large Integer Multiplication:\\A Friendly Introduction\\to Select Multiplication Algorithms}
+\title{Large Integer Multiplication:\\A Friendly Survey of Algorithms}
 
 \author{JT Miller}
 
@@ -73,6 +73,12 @@ Large integer multiplication is pervasive in our lives in the form of cryptograp
 How do computers multiply integers larger than the number of bits within dedicated hardware? This paper provides a survey of several large integer multiplication algorithms that answer this question. The aim of the paper is to provide a friendly introduction with many examples such that undergraduate students can look past the complexity of these algorithms, grasp the fundamentals, and hopefully understand some of the beauty in the algorithms. 
 
 The title of the paper is a tribute to Dr. Silverman's wonderful \textit{A Friendly Introduction to Number Theory}. We will start with grade school multiplication, then cover a simple but useful extension that allows multiplication in ``chunks''. We then cover the first advance in nearly 4000 years \cite{burton1985history}, Karatsuba's algorithm. Next we will discuss the Toom-Cook algorithm that is a generalization of Karatsuba's algorithm. Next we cover the fundamentals of the Discrete Fourier Transform (DFT) and Fast Fourier Transform (FFT) to understand how these algorithms are used to multiply large integers. Finally, we cover the Sch\"{o}nhage-Strassen multiplication algorithm, which gets us to $\mathcal{O}(n \log n \log \log n)$ time complexity.
+
+\subsection{Prerequisites}
+There are surprisingly few prerequisites to understand this material. Perhaps the most important prerequisite is familiarity with mathematical notation. Otherwise, grade school arithmetic and familiarity with complex numbers is all that is required. The more advanced algorithms would benefit from familiarity with matrix manipulation, Linear Algebra, and Calculus, but these are not strict prerequisites. As this is a friendly introduction, we have tried to make the algorithms available to the widest audience possible, and hence avoided discussions that require more advanced mathematics. Suggestions to make the material available to an even wider audience are welcome.
+
+\subsection{Software}
+The companion software for this paper can be found on GitHub at (TODO: Insert github link here) and GitLab at (TODO: Insert gitlab link here). All of the examples shown are solved in software and stepped through, as well as all algorithms illustrated. Most programs were initially done in Python as support for large integer arithmetic is built into the language which makes testing easy, but the programs are also available (to some extent) in Java, MATLAB, and C/C++. 
 
 \section{Grade School Multiplication}
 Multiplication dates back to at least 2000 B.C. \cite{burton1985history} and of course we all learn how to multiply integers in grade school. A review of this algorithm gives us a grasp of the terminology and notation we will use throughout the rest of this paper to discuss multiplication algorithms. We start with a representation for integers, which will be useful for later algorithms.
@@ -139,7 +145,6 @@ Expressed mathematically, we are performing the following,
 \end{equation}
 
 Now, let us determine an algorithm for performing our grade school multiplication. 
-
 \begin{algorithm}[H]
 	\caption{Grade School Multiplication}
 	\label{gs_mult_algo}
@@ -206,15 +211,13 @@ def grade_school_multiplication(X: list[int], Y: list[int]) -> list[int]:
 We can make a simple modification to our grade school multiplication that allows us to increase our multiplication speed by a factor of our machine's bit-length. Because this technique is generic, the exact bit-lengths involved in integer hardware multiplication aren't necessarily important. The increase comes by recognizing that instead of multiplying a single digit at a time, we can multiply chunks of digits. We will use $\num{123456} \times \num{987654} = \num{121931812224}$ to illustrate\footnote{Note that the spaces in numbers such as these are strictly for readability purposes. Numbers formatted with spaces like those in the previous multiplication are still single contiguous numbers.} our chunky grade school multiplication algorithm improvement.
 
 Figure~\ref{fig:cgs01} shows how we can group our digits into chunks. These chunks allow fewer partial products even though we now have more total digits. The chunks ``skip'' base powers by grouping digits. 
- 
-\begin{figure}[H]
+ \begin{figure}[H]
 	\includegraphics{img/chunky_gs_mul_ex_01}
 	\caption{Chunky Grade School Multiplication of $\num{123456} \times \num{987654}$}
 	\label{fig:cgs01}
 \end{figure}
 
 If we group 3 digits then we are using a chunk size of 3 base powers, which we then keep track of throughout the algorithm. In actual large integer multiplication algorithms, we must be careful to guarantee that the summation of partial products for a given base power/column fits within the machine word size/bit width. Let us use the positive integer $h$ for chunk size, then we have just a small modification from equation~\ref{gsmul}, 
-
 \begin{equation}
 	xy = \sum_{k=0}^{n-1}\sum_{j=0}^{n-1}X_jY_kB^{h(j+k)}.
 \end{equation}
@@ -320,7 +323,6 @@ We now turn our attention to Karatsuba's algorithm. In 1960, Andrey Kolmogorov c
 
 \subsection{Algorithm \nopunct}
 Karatsuba's algorithm involves manipulating the partial products involved in multiplication, a divide and conquer approach. Let the tens' and ones' digits of $x$ to be $ab$, or $X_1 = a$, and $X_0 = b$ from our previous discussions. Similarly, let the tens and ones' digits of $y$ be $cd$, or $Y_1 = c$ and $Y_0 = d$. Figure~\ref{fig:gs_abcd} shows this simple grade school multiplication. 
-
 \begin{figure}[H]
 	\includegraphics{img/gs_abcd}
 	\caption{Grade School $abcd$ Multiplication}
@@ -328,7 +330,6 @@ Karatsuba's algorithm involves manipulating the partial products involved in mul
 \end{figure}
 
 Note that we are neglecting the base. Figure~\ref{fig:gs_abcdz} shows the same multiplication with our base $z$ included. 
-
 \begin{figure}[H]
 	\includegraphics{img/gs_abcdz}
 	\caption{Grade School $abcdz$ Multiplication (includes base $z$)}
@@ -336,7 +337,6 @@ Note that we are neglecting the base. Figure~\ref{fig:gs_abcdz} shows the same m
 \end{figure}
 
 Karatsuba recognized that the multiplication of partial products, $(a+b)(c+d)=ac+(ad+bc)+bd$ could be manipulated to yield three multiplications instead of four. $ac$ is one multiplication, $bd$ is the second, and then we can use the fact that $(ad+bc) = (a+b)(c+d) - (ac + bd)$ for the third multiplication. We now have all the partial products necessary, having deconstructed the addition of partial products. At the cost of a few more additions and subtractions, we can remove one multiplication. Figure~\ref{fig:abcd_equation} shows this simple coefficient manipulation with the multiplications numbered at the bottom of equations and the ``free'' multiplication shown. The letters $A$-$E$ denote the arithmetic quantities we will compute during the algorithm.
-
 \begin{figure}[H]
 	\includegraphics{img/abcd_equation}
 	\caption{Karatsuba's Manipulation of Coefficients}
@@ -344,7 +344,6 @@ Karatsuba recognized that the multiplication of partial products, $(a+b)(c+d)=ac
 \end{figure}
 
 Figure~\ref{fig:karatsuba_example} shows an example for $\num{25786109} \times \num{72166948} = \num{1860904787325332}$ with the same coloring used to denote $abcd$ as the previous explanations. Note that we have combined the algorithm with chunking (typically this is referred to as blocking, but the term chunking is more fun) that combines several coefficients. 
-
 \begin{figure}[H]
 	\includegraphics{img/karatsuba_example}
 	\caption{Karatsuba Example}
@@ -352,7 +351,6 @@ Figure~\ref{fig:karatsuba_example} shows an example for $\num{25786109} \times \
 \end{figure}
 
 Karatsuba's three coefficient products, $ac$, $bd$, and $(a+b)(c+d)$, can be used to recursively subdivide the problem further. Figure~\ref{fig:karatsuba_large_example} shows a larger Karatsuba example where we recursively apply Karatsuba to coefficients.\footnote{The recursion is for illustrative/instructive purposes and unnecessary. We could have used more coefficients and a larger base power without the recursive stages.} The equations in the upper right are those as before. The numbers $1$-$3$ show the three multiplications and the letters  $A$-$E$ to denote the arithmetic quantities computed during the algorithm. We shows these $A$-$E$ quantities under each stage, including the final summation with base powers multiplied into computed quantities. Note that we dispense with printing this final summation after the first stage as the large quantities become cumbersome to print and we just print the $A$-$E$ quantities and final result. \cite{wiki:Karatsuba_algorithm} provides an excellent graphic with another example and a different representation of the computations involved.
-
 \begin{figure}[H]
 	\includegraphics{img/karatsuba_large_example}
 	\caption{Larger Karatsuba Example}
@@ -539,25 +537,56 @@ For our friends without linear algebra rejoining us, this is
 Note that we could optimize this by computing partial summations and then reusing results as we did in Equation~\ref{toom_opt1}-\ref{toom_opt6}. We leave this as an exercise for the reader. Let us compute a Toom-3 example with $\num{698310488572646777019184} \times \num{144585992498882884065634} = 
 \num{100965915062655948833325499910140535809533122656}$. Here,
 \begin{align*}
-	x_2 &= 69831048 \\
-	x_1 &= 85726467 \\
-	x_0 &= 77019184 \\
-	y_2 &= 14458599 \\
-	y_1 &= 24988828 \\
-	y_0 &= 84065634.
+	x_2 &= \num{69831048} \\
+	x_1 &= \num{85726467} \\
+	x_0 &= \num{77019184} \\
+	y_2 &= \num{14458599} \\
+	y_1 &= \num{24988828} \\
+	y_0 &= \num{84065634}.
 \end{align*}
 
+Now we can compute our points for our x and y polynomials:
 \begin{align*}
-	content...
+	x(0) &= x_0 &&= \num{77019184} \\
+	x(1) &= x_2 + x_1 + x_0 &&= \num{69831048} + \num{85726467} + \num{77019184} &&= \num{232576699} \\
+	x(-1) &= x_2 - x_1 + x_0 &&= \num{69831048} - \num{85726467} + \num{77019184} &&= \num{61123765} \\
+	x(-2) &= 4x_2 - 2x_1 + x_0 &&= 4 \cdot \num{69831048} - 2 \cdot \num{85726467} + \num{77019184} &&= \num{184890442} \\
+	x(\infty) &= x_2 &&= \num{85726467} \\ \\
+	y(0) &= y_0 &&= \num{84065634} \\
+	y(1) &= y_2 + y_1 + y_0 &&= \num{14458599} + \num{24988828} + \num{84065634} &&= \num{123513061} \\
+	y(-1) &= y_2 - y_1 + y_0 &&= \num{14458599} - \num{24988828} + \num{84065634} &&= \num{73535405} \\
+	y(-2) &= 4y_2 - yx_1 + y_0 &&= 4 \cdot \num{14458599} - 2 \cdot \num{24988828} + \num{84065634} &&= \num{91922374} \\
+	y(\infty) &= y_2 &&= \num{14458599}.
 \end{align*}
+
+And then multiply the two polynomials points' together to yield points for $w(t)$:
+\begin{align*}
+	w(0) &= x(0)y(0) &&= \num{77019184} \cdot \num{123513061} &&= \num{6474666533122656}\\
+	w(1) &= x(1)y(1) &&= \num{232576699} \cdot \num{73535405} &&= \num{28726260010765639} \\
+	w(-1) &= x(-1)y(-1) &&= \num{61123765} \cdot \num{84065634}  &&= \num{4494760814399825} \\
+	w(-2) &= x(-2)y(-2) &&= \num{77019184} \cdot \num{91922374} &&= \num{16995568358549308} \\
+	w(\infty) &= x(\infty)y(\infty) &&= \num{184890442} \cdot \num{14458599} &&= \num{1009659120781752}.
+\end{align*}
+
+We then multiply our inverse matrix by $w(t)$'s points to yield the coefficients:
+\begin{align*}
+	w_0 &= \num{6474666533122656} \\
+	w_1 &= \num{9131268940611430} \\
+	w_2 &= \num{9126184758678324} \\
+	w_3 &= \num{2984480657571477} \\
+	w_4 &= \num{1009659120781752}.
+\end{align*}
+
+Now we perform the carries based on our chunk size. We used a chunk of $8$, hence we carry beyond $10^8$ digits of each chunk to the next chunk. As an example, for $w_0$, the lower 8 digits are $\num{33122656}$ and we carry and add $\num{64746665}$ to the lower $8$ digits of the next chunk, $\num{40611430}$, giving us $\num{64746665} + \num{40611430} = \num{105358095}$. Hence the lower $16$ digits of our product are ${0535809533122656}$. We continue in this manner to find our final answer of $\num{698310488572646777019184} \times \num{144585992498882884065634} = 
+\num{100965915062655948833325499910140535809533122656}$.
 
 \subsection{Algorithm \nopunct}
 
-
+TODO: Toom-Cook Algorithm
 
 \subsection{Time Complexity Analysis \nopunct}
 
-
+TODO: Toom-Cook Analysis
 
 \subsection{Code Examples \nopunct}
 
@@ -664,6 +693,7 @@ if __name__ == "__main__":
 \section{The DFT and FFT}
 
 \subsection{Algorithm \nopunct}
+
 \subsection{Time Complexity Analysis \nopunct}
 \subsection{Code Examples \nopunct}
 
@@ -685,7 +715,7 @@ if __name__ == "__main__":
 
 \section{Conclusion}
 
-\section*{Acknowledgments} I would like to extend my heartfelt thanks to Dr. Huang for allowing me to pursue an open-ended research topic and providing guidance and motivation along the way. I am aware that undergraduate research has few tangible benefits for a professor, but this has been a tremendously rewarding experience for me. Thank you for patience during the weeks where I was making no visible progress. Thank you for your mentorship and gentle steering during this research. Most of all, thank you for sharing your passion for algorithms and mathematics. That passion is infectious and has made working with you not just a rewarding, but joyful experience. 
+\section*{Acknowledgments} I would like to extend my heartfelt thanks to Dr. Huang for allowing me to pursue an open-ended survey topic and providing guidance and motivation along the way. I am aware that an undergraduate survey of existing algorithms has few tangible benefits for a professor, but this has been a tremendously rewarding experience for me. Thank you for patience during the weeks where I was making no visible progress. Thank you for your mentorship and gentle steering during this survey. Most of all, thank you for sharing your passion for algorithms and mathematics. That passion is infectious and has made working with you not just a rewarding, but joyful experience. 
 
 \printbibliography
 
