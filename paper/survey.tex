@@ -75,7 +75,7 @@ How do computers multiply integers larger than the number of bits within dedicat
 The title of the paper is a tribute to Dr. Silverman's wonderful \textit{A Friendly Introduction to Number Theory}. We will start with grade school multiplication, then cover a simple but useful extension that allows multiplication in ``chunks''. We then cover the first advance in nearly 4000 years \cite{burton1985history}, Karatsuba's algorithm. Next we will discuss the Toom-Cook algorithm that is a generalization of Karatsuba's algorithm. Next we cover the fundamentals of the Discrete Fourier Transform (DFT) and Fast Fourier Transform (FFT) to understand how these algorithms are used to multiply large integers. Finally, we cover the Sch\"{o}nhage-Strassen multiplication algorithm, which gets us to $\mathcal{O}(n \log n \log \log n)$ time complexity.
 
 \subsection{Prerequisites}
-There are surprisingly few prerequisites to understand this material. Perhaps the most important prerequisite is familiarity with mathematical notation. Otherwise, grade school arithmetic and familiarity with complex numbers is all that is required. The more advanced algorithms would benefit from familiarity with matrix manipulation, Linear Algebra, and Calculus, but these are not strict prerequisites. As this is a friendly introduction, we have tried to make the algorithms available to the widest audience possible, and hence avoided discussions that require more advanced mathematics. Suggestions to make the material available to an even wider audience are welcome.
+There are surprisingly few prerequisites to understand this material. Perhaps the most important prerequisite is some familiarity with mathematical notation. Otherwise, grade school arithmetic and trigonometry through complex numbers and the unit circle is all that is required. The more advanced algorithms would benefit from familiarity with matrix manipulation, Linear Algebra, and Calculus, but these are not strict prerequisites. As this is a friendly introduction, we have tried to make the algorithms available to the widest audience possible, and hence avoided discussions that require more advanced mathematics. Suggestions to make the material available to an even wider audience are welcome.
 
 \subsection{Software}
 The companion software for this paper can be found on GitHub at (TODO: Insert github link here) and GitLab at (TODO: Insert gitlab link here). All of the examples shown are solved in software and stepped through, as well as all algorithms illustrated. Most programs were initially done in Python as support for large integer arithmetic is built into the language which makes testing easy, but the programs are also available (to some extent) in Java, MATLAB, and C/C++. 
@@ -577,7 +577,7 @@ We then multiply our inverse matrix by $w(t)$'s points to yield the coefficients
 	w_4 &= \num{1009659120781752}.
 \end{align*}
 
-Now we perform the carries based on our chunk size. We used a chunk of $8$, hence we carry beyond $10^8$ digits of each chunk to the next chunk. As an example, for $w_0$, the lower 8 digits are $\num{33122656}$ and we carry and add $\num{64746665}$ to the lower $8$ digits of the next chunk, $\num{40611430}$, giving us $\num{64746665} + \num{40611430} = \num{105358095}$. Hence the lower $16$ digits of our product are ${0535809533122656}$. We continue in this manner to find our final answer of $\num{698310488572646777019184} \times \num{144585992498882884065634} = 
+Now we perform the carries based on our chunk size. We used a chunk of $8$, hence we carry beyond $10^8$ digits of each chunk to the next chunk. As an example, for $w_0$, the lower 8 digits are $\num{33122656}$ and we carry and add $\num{64746665}$ to the lower $8$ digits of the next chunk, $\num{40611430}$, giving us $\num{64746665} + \num{40611430} = \num{105358095}$. Hence the lower $16$ digits of our product are ${0535809533122656}$. We continue in this manner to find our final answer of $\num{698310488572646777019184} \times \num{144585992498882884065634} =\\ 
 \num{100965915062655948833325499910140535809533122656}$.
 
 \subsection{Algorithm \nopunct}
@@ -587,6 +587,8 @@ TODO: Toom-Cook Algorithm
 \subsection{Time Complexity Analysis \nopunct}
 
 TODO: Toom-Cook Analysis
+
+Note how quickly the number of terms grows as we partition our multiplicands into larger numbers. In most cases, this limits the practical use of Toom-Cook to three or four partitions.
 
 \subsection{Code Examples \nopunct}
 
@@ -691,6 +693,27 @@ if __name__ == "__main__":
 \end{minted}
 
 \section{The DFT and FFT}
+
+The Toom-Cook algorithm showed an alternate method to carry out multiplication rather than just optimizing the mechanics of our familiar grade school multiplication process. In the case of Toom-Cook, that was using the multiplicands as coefficients for polynomials, multiplying enough points to represent a resultant polynomial, then interpolating back into the coefficients that represent our desired product. Such alternate methods are often referred to as transforms. We continue on this path of transforms now with the Discrete Fourier Transform (DFT). The Discrete Fourier Transform (DFT) is typically used to take a number of time-domain samples and transform those samples to show the frequency domain content of the signal represented by the time-domain samples. The Fast Fourier Transform (FFT) is a novel method to compute the DFT quickly with the restriction that the number of time domain samples must be a binary power, i.e. $2^m$ for some positive integer $m$. We will utilize the DFT and FFT algorithms that transform a time-domain signal to a frequency domain signal to transform our multiplication process. Before we get to our number theoretic transform, we will review the DFT and FFT algorithms.
+
+The DFT formula is
+\begin{equation*}
+	X_m = \sum_{n=0}^{N-1}x_n e^{-i2\pi nm/N}.
+\end{equation*}
+where $e^{-i2\pi nm/N}$ is a complex number that represents $cos{(2 \pi k/n)} - i\sin{(2 \pi k/n)}$. The interesting thing to note, from a number theoretic transform viewpoint, is that $e^{i2\pi k/n}$ raised to any positive integer always has a magnitude of $1$. That is, $|e^{-i2\pi nm/N}| = 1$. A \textit{root of unity} is a number with the property that when raised to a positive integer power, the result is $1$. This will be important in our use of the FFT to compute the multiplication of large integers. The DFT provides the spectral content of the signal, and the larger the number of points used, $N$, the finer the resolution of the spectral content, and the more calculations that must be carried out to attain the DFT.
+
+The root of unity quantity $e^{-i2\pi nm/N}$ is often called the twiddle factor in the DFT and FFT. We use a shorthand to denote twiddle factors:
+\begin{equation}
+	\omega_N^m = e^{-i2\pi nm/N}.
+\end{equation}
+The DFT then becomes:
+\begin{equation*}
+	X_m = \frac{1}{n}\sum_{n=0}^{N-1}x_n \omega_N^m.
+\end{equation*}
+
+
+
+
 
 \subsection{Algorithm \nopunct}
 
