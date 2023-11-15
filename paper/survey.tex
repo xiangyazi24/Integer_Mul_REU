@@ -48,13 +48,15 @@
 \bibstyle{plain}
 
 %--------Meta Data: Fill in your info------
+\begin{document}
+
 \title{Large Integer Multiplication:\\A Friendly Survey of Algorithms}
-
-\author{JT Miller}
-
 \date{December 8, 2023}
 
-\begin{document}
+\author{JT Miller}
+\address{University of Illinois at Springfield}
+\thanks{jt.miller@txbinary.com}
+\email{jt.miller@txbinary.com}
 
 \begin{abstract}
 
@@ -63,6 +65,7 @@ How do computers multiply integers larger than the number of bits within dedicat
 \end{abstract}
 
 \maketitle
+
 
 \tableofcontents
 
@@ -711,7 +714,18 @@ The DFT then becomes:
 	X_m = \frac{1}{n}\sum_{n=0}^{N-1}x_n \omega_N^m.
 \end{equation*}
 
+Why are we bothering to introduce the DFT and how to transform a signal from the time domain to the frequency domain? Because it turns out that convolution in the time domain, at least for coefficients, is the same as multiplication. The issue with this is that the convolution in the time domain is slow, the same as our $\mathcal{O}(n^2)$ from grade school multiplication. But it turns out that convolution in the time domain is the same thing as multiplication in the frequency domain. The Fast part of the FFT means we can perform our transform in $\mathcal{O}(n \log n)$. We can quickly transform our signal made up of polynomial coefficients (our time domain signal) using the FFT, do a point-wise multiplication in the frequency domain, then transform back into the time domain by computing an inverse FFT. We are now transforming and multiplying transforms to complete our large integer multiplication! 
 
+Let's first demonstrate that convolution of polynomial coefficients is the same as multiplication. Let's use $1234 \times 6789$ as our example. In this case, we have
+\begin{align*}
+	x &= {4, 3, 2, 1}
+	y &= {9, 8, 7, 6}.
+\end{align*}
+
+The convolution is defined as 
+\begin{equation}
+	x * y (n) = \sum_{k=-\infty}^{\infty} x(k) y(n-k)
+\end{equation}
 
 
 
@@ -733,8 +747,6 @@ The DFT then becomes:
 \subsection{Algorithm \nopunct}
 \subsection{Time Complexity Analysis \nopunct}
 \subsection{Code Examples \nopunct}
-
-\section{O(n log n)}
 
 \section{Conclusion}
 
