@@ -55,7 +55,6 @@
 
 \author{JT Miller}
 \address{University of Illinois at Springfield}
-\thanks{jt.miller@txbinary.com}
 \email{jt.miller@txbinary.com}
 
 \begin{abstract}
@@ -78,7 +77,10 @@ How do computers multiply integers larger than the number of bits within dedicat
 The title of the paper is a tribute to Dr. Silverman's wonderful \textit{A Friendly Introduction to Number Theory}. We will start with grade school multiplication, then cover a simple but useful extension that allows multiplication in ``chunks''. We then cover the first advance in nearly 4000 years \cite{burton1985history}, Karatsuba's algorithm. Next we will discuss the Toom-Cook algorithm that is a generalization of Karatsuba's algorithm. Next we cover the fundamentals of the Discrete Fourier Transform (DFT) and Fast Fourier Transform (FFT) to understand how these algorithms are used to multiply large integers. Finally, we cover the Sch\"{o}nhage-Strassen multiplication algorithm, which gets us to $\mathcal{O}(n \log n \log \log n)$ time complexity.
 
 \subsection{Prerequisites}
-There are surprisingly few prerequisites to understand this material. Perhaps the most important prerequisite is some familiarity with mathematical notation. Otherwise, grade school arithmetic and trigonometry through complex numbers and the unit circle is all that is required. The more advanced algorithms would benefit from familiarity with matrix manipulation, Linear Algebra, and Calculus, but these are not strict prerequisites. As this is a friendly introduction, we have tried to make the algorithms available to the widest audience possible, and hence avoided discussions that require more advanced mathematics. Suggestions to make the material available to an even wider audience are welcome.
+There are surprisingly few prerequisites to understand this material. The most important prerequisites are some familiarity with mathematical notation and the desire to understand large integer multiplication. Grade school arithmetic and trigonometry through complex numbers and the unit circle is all that is required. The more advanced algorithms would benefit from familiarity with matrix manipulation, Linear Algebra, and Calculus, but these are not strict prerequisites. As this is a friendly introduction, we have tried to make the algorithms available to the widest audience possible, and hence avoided discussions that require more advanced mathematics. Suggestions to make the material available to an even wider audience are welcome.
+
+\subsection{Notation and Volume Challenges}
+The density and abstract symbolic nature of mathematical notation makes understanding the underlying concepts expressed by the notation extremely challenging. Human beings are primarily visual learners, and mathematical notation purposefully condenses and symbolizes ideas into abstract notation that does not readily translate to an intuitive understanding of the underlying concepts. Being able to understand the notation takes time and practice. Developing an intuitive understanding of what the notation represents even more so. We have striven to provide a non-trivial example for each algorithm/transform/concept, but because we are unpacking concise notation, the sheer volume of arithemtic produced can provide its own challenge. Do not despair - if you find yourself lost in the details, remind yourself of what we are trying to compute and the underlying concepts behind the computations and notation. After all, we're just multiplying integers, how complex can it be?
 
 \subsection{Software}
 The companion software for this paper can be found on GitHub at (TODO: Insert github link here) and GitLab at (TODO: Insert gitlab link here). All of the examples shown are solved in software and stepped through, as well as all algorithms illustrated. Most programs were initially done in Python as support for large integer arithmetic is built into the language which makes testing easy, but the programs are also available (to some extent) in Java, MATLAB, and C/C++. 
@@ -580,7 +582,7 @@ We then multiply our inverse matrix by $w(t)$'s points to yield the coefficients
 	w_4 &= \num{1009659120781752}.
 \end{align*}
 
-Now we perform the carries based on our chunk size. We used a chunk of $8$, hence we carry beyond $10^8$ digits of each chunk to the next chunk. As an example, for $w_0$, the lower 8 digits are $\num{33122656}$ and we carry and add $\num{64746665}$ to the lower $8$ digits of the next chunk, $\num{40611430}$, giving us $\num{64746665} + \num{40611430} = \num{105358095}$. Hence the lower $16$ digits of our product are ${0535809533122656}$. We continue in this manner to find our final answer of $\num{698310488572646777019184} \times \num{144585992498882884065634} =\\ 
+Now we perform the carries based on our chunk size. We used a chunk of $8$, hence we carry beyond $10^8$ digits of each chunk to the next chunk. As an example, for $w_0$, the lower 8 digits are $\num{33122656}$ and we carry and add $\num{64746665}$ to the lower $8$ digits of the next chunk, $\num{40611430}$, giving us $\num{64746665} + \num{40611430} = \num{105358095}$. Hence the lower $16$ digits of our product are $\num{0535809533122656}$. We continue in this manner to find our final answer of $\num{698310488572646777019184} \times \num{144585992498882884065634} =\\ 
 \num{100965915062655948833325499910140535809533122656}$.
 
 \subsection{Algorithm \nopunct}
@@ -695,7 +697,7 @@ if __name__ == "__main__":
     print_num(w)
 \end{minted}
 
-\section{The DFT and FFT}
+\section{Convolution}
 
 The Toom-Cook algorithm showed an alternate method to carry out multiplication rather than just optimizing the mechanics of our familiar grade school multiplication process. In the case of Toom-Cook, that was using the multiplicands as coefficients for polynomials, multiplying enough points to represent a resultant polynomial, then interpolating back into the coefficients that represent our desired product. Such alternate methods are often referred to as transforms. We continue on this path of transforms now with the Discrete Fourier Transform (DFT). The Discrete Fourier Transform (DFT) is typically used to take a number of time-domain samples and transform those samples to show the frequency domain content of the signal represented by the time-domain samples. The Fast Fourier Transform (FFT) is a novel method to compute the DFT quickly with the restriction that the number of time domain samples must be a binary power, i.e. $2^m$ for some positive integer $m$. We will utilize the DFT and FFT algorithms that transform a time-domain signal to a frequency domain signal to transform our multiplication process. Before we get to our number theoretic transform, we will review the DFT and FFT algorithms.
 
@@ -707,27 +709,133 @@ where $e^{-i2\pi nm/N}$ is a complex number that represents $cos{(2 \pi k/n)} - 
 
 The root of unity quantity $e^{-i2\pi nm/N}$ is often called the twiddle factor in the DFT and FFT. We use a shorthand to denote twiddle factors:
 \begin{equation}
-	\omega_N^m = e^{-i2\pi nm/N}.
+	W_N = e^{-i 2 \pi /N}.
 \end{equation}
 The DFT then becomes:
 \begin{equation*}
-	X_m = \frac{1}{n}\sum_{n=0}^{N-1}x_n \omega_N^m.
+	X_m = \sum_{n=0}^{N-1}x_n W_N^{nm}.
 \end{equation*}
 
 Why are we bothering to introduce the DFT and how to transform a signal from the time domain to the frequency domain? Because it turns out that convolution in the time domain, at least for coefficients, is the same as multiplication. The issue with this is that the convolution in the time domain is slow, the same as our $\mathcal{O}(n^2)$ from grade school multiplication. But it turns out that convolution in the time domain is the same thing as multiplication in the frequency domain. The Fast part of the FFT means we can perform our transform in $\mathcal{O}(n \log n)$. We can quickly transform our signal made up of polynomial coefficients (our time domain signal) using the FFT, do a point-wise multiplication in the frequency domain, then transform back into the time domain by computing an inverse FFT. We are now transforming and multiplying transforms to complete our large integer multiplication! 
 
 Let's first demonstrate that convolution of polynomial coefficients is the same as multiplication. Let's use $1234 \times 6789$ as our example. In this case, we have
 \begin{align*}
-	x &= {4, 3, 2, 1}
-	y &= {9, 8, 7, 6}.
+	x &= \{4, 3, 2, 1\} \\
+	y &= \{9, 8, 7, 6\}.
 \end{align*}
 
 The convolution is defined as 
+\begin{equation*}
+	(x * y) (n) = \sum_{k=-\infty}^{\infty} x(k) y(n-k).
+\end{equation*}
+
+If we are working with coefficients for a polynomial with $n$ coefficients, we can change the summation limits to reflect the actual limits of the summation. Remember that our product can have up to $2n$ coefficients if our multiplicands each have $n$ bits. Because we're starting our numbering at $0$, we will set the upper limit at $2n-1$. While we're at it, let's use a new variable for the convolution result and say $x*y=h$:
 \begin{equation}
-	x * y (n) = \sum_{k=-\infty}^{\infty} x(k) y(n-k)
+	h(n) = \sum_{k=0}^{2n-1} x(k) y(n-k).
 \end{equation}
 
+Let's work through our example of $x=1234 \times y=6789$:
+\begin{align*}
+	h_0 &= x_0y_0 &&= 4 \cdot 9 &= 36 \\
+	h_1 &= x_0y_1 + x_1y_0 &&= 4 \cdot 8 + 3 \cdot 9 &= 59 \\
+	h_2 &= x_0y_2 + x_1y_1 + x_2y_0 &&= 4 \cdot 7 + 3 \cdot 8 + 2 \cdot 9 &= 70 \\
+	h_3 &= x_0y_3 + x_1y_2 + x_2y_1 + x_3y_0 &&= 4 \cdot 6 + 3 \cdot 7 + 2 \cdot 8 + 1 \cdot 9 &= 70 \\
+	h_4 &= x_1y_3 + x_2y_2 + x_3y_1 &&= 3 \cdot 6 + 2 \cdot 7 + 1 \cdot 8 &= 40 \\
+	h_5 &= x_2y_3 + x_3y_1 &&= 2 \cdot 6 + 1 \cdot 7 &= 19 \\
+	h_6 &= x_3y_3 &&= 6
+\end{align*}
 
+Of course, we then carry at each power:
+\begin{align*}
+	h_0 &= 6 &&\to 6\\
+	h_1 &= 59 + 3 &&\to 2 \\
+	h_2 &= 70 + 6 &&\to 6 \\
+	h_3 &= 70 + 7 &&\to 7 \\
+	h_4 &= 40 + 7 &&\to 7 \\
+	h_5 &= 19 + 4 &&\to 3 \\
+	h_6 &= 6 + 2 &&\to 8
+\end{align*}
+
+So our final answer is $1234 \times 6789 = \num{8377626}$. This operation should look extremely familiar. This is the same as (TODO: INSERT REFERENCE HERE) from (TODO: INSESRT REFERENCE HERE). We reproduce (TODO: INSERT REFERENCE HERE) for convenience.
+\begin{figure}[H]
+	\includegraphics{img/gs_mul4}
+	\caption{Grade School Multiplication of $1234 \times 6789$ - again}
+	\label{fig:gs01_again}
+\end{figure}
+
+To provide a visual, many texts (TODO: INSERT REFERENCES) discuss the convolution operation in terms of reflecting one function about the y-axis and sliding that function, ($x(n)$) in this case, across the other. When we do this we will see the same grade school multiplication operation that we are used to. Figure~\ref{fig:conv} below illustrates the operation. Note that we have provided zeroes for coefficients outside our populated coefficients. We dispense with these zeroes to show the "sliding" of $x(n)$ across $y(n)$. The box drawn around the coefficients shows us which terms we are multiplying (vertically) and summing (horizontally) to compute each $h(n)$ coefficient. 
+\begin{figure}[H]
+	\includegraphics{img/convolution}
+	\caption{Multiplication via Convolution of $1234 \times 6789 = \num{8377626}$}
+	\label{fig:conv}
+\end{figure}
+
+Comparing the partial products summed for each coefficient to the grade school multiplication columns in Figure~\ref{fig:gs01_again}, we find that the partial products summed for each coefficient are exactly the same. Convolution of polynomial coefficients for base power expression of two numbers is exactly the same as multiplication\footnote{Note that convolution of two functions/signals is not the same as multiplication - we have cleverly expressed our multiplicands as polynomials using base powers and coefficients and for that specific case, convolution is the same as multiplication. However, in general, that is not the case.}.
+
+Obviously, from here and our examples before, the time complexity of the convolution operation is $\mathcal{O}(n^2)$. Let us now turn to the Fast Fourier Transform and how we may quickly compute the DFT using the FFT.
+
+\subsection{The Discrete Fourier Transform}
+
+\subsection{The Fast Fourier Transform}
+The Fast Fourier Transform algorithm created by Cooley and Tukey in 1965 \cite{cooley1965algorithm} creates a divide-and-conquer method compute the DFT and take advantage of the symmetry and rotation properties of the complex exponentials used in the DFT. Recall the equation for the DFT:
+\begin{equation*}
+	X_m = \sum_{n=0}^{N-1}x_n e^{-i2\pi nm/N}.
+\end{equation*}
+And the twiddle factor expression:
+\begin{equation*}
+	W_N = e^{-i 2 \pi /N}.
+\end{equation*}
+The DFT with the twiddle factor then becomes:
+\begin{equation*}
+	X_m = \sum_{n=0}^{N-1}x_n W^{mn}.
+\end{equation*}
+And finally, the FFT will make heavy use of the symmetry and periodicity properties of complex exponentials \cite{proakis1995digital}:
+\begin{align*}
+	\textbf{Symmetry property: }& W_N^{m+N/2} = -W_N^m \\
+	\textbf{Periodicity property: }& W_N^{m+N} = W_N^m
+\end{align*}
+The FFT begins by dividing the DFT summation into the even $(2n)$ and odd $(2n+1)$ terms:
+\begin{align*}
+	X(m) &= \sum_{n=0}^{N-1}x(n) W^{mn} \\
+	&= \sum_{n=0}^{N/2-1}x_{2n}W_N^{(2n)m} + \sum_{n=0}^{N/2-1}x_{2n+1}W_N^{(2n+1)m} \\
+	&= \sum_{n=0}^{N/2-1}x_{2n}W_N^{2nm} + W_N^m\sum_{n=0}^{N/2-1}x_{2n+1}W_N^{2nm}
+\end{align*}
+where we have simply factored out the constant $W_N^m$ from the $(2n+1)$ odd term in the second summation. We can use the periodicity property to simplify the expression further. Because
+\begin{align*}
+	W_N^{2m} = e^{-i2\pi(2m)/N} = e^{-i2\pi m/(N/2)} = W_{N/2}^m
+\end{align*}
+we can write
+\begin{equation}
+	\label{first_fft_summation}
+	X(m) = \sum_{n=0}^{N/2-1}x_{2n}W_{N/2}^{nm} + W_N^m\sum_{n=0}^{N/2-1}x_{2n+1}W_{N/2}^{nm}
+\end{equation}
+where $m$ is in the range of $0$ to $N/2-1$. We can substitute $(m+N/2)$ for $m$ to obtain the other half of the equation:
+\begin{align}
+	\label{complex_second_half_fft}
+	X(m+N/2) = \sum_{n=0}^{N/2-1}x_{2n}W_{N/2}^{n(m+N/2)} + W_N^{(m+N/2)}\sum_{n=0}^{N/2-1}x_{2n+1}W_{N/2}^{n(m+N/2)}.
+\end{align}
+As \cite{lyons1997understanding} notes, this looks worse, but we can use our complex exponential properties to reduce the complexity of the equations.
+\begin{align}
+	\label{simplify_second_sum}
+	W_{N/2}^{n(m+N/2)} &= W_{N/2}^{nm} W_{N/2}^{n(N/2)} = W_{N/2}^{nm} e^{-i2 \pi n(N/2)/(N/2)}  \\
+	&= W_{N/2}^{nm} e^{-i 2 \pi n} = W_{N/2}^{nm}(1) = -W_{N/2}^{nm}
+\end{align}
+as $e^{-i 2 \pi n} = 1$ for any integer $n$. Similarly, we may reduce the twiddle factor in front of the second summation:
+\begin{align}
+	\label{simplify_twiddle}
+	W_N^{(m+N/2)} &= W_N^m W_N^{N/2} = W_N^m e^{-i 2 \pi (N/2)/N} \\
+	&= W_N^m e^{-i \pi} = W_N^m(-1) = -W_N^m.
+\end{align}
+We may now substitute \ref{simplify_twiddle} and \ref{simplify_twiddle} into \ref{complex_second_half_fft} to simplify the second half of the FFT:
+\begin{equation}
+	\label{second_fft_summation}
+	X(m+N/2) = \sum_{n=0}^{N/2-1}x_{2n}W_{N/2}^{nm} - W_N^m\sum_{n=0}^{N/2-1}x_{2n+1}W_{N/2}^{nm}.
+\end{equation}
+Finally, let's write the equations for the first $N/2$ points \ref{first_fft_summation} and second $N/2$ points \ref{second_fft_summation} together:
+\begin{align}
+	X(m) &= \sum_{n=0}^{N/2-1}x_{2n}W_{N/2}^{nm} + W_N^m\sum_{n=0}^{N/2-1}x_{2n+1}W_{N/2}^{nm} \\
+	X(m+N/2) &= \sum_{n=0}^{N/2-1}x_{2n}W_{N/2}^{nm} - W_N^m\sum_{n=0}^{N/2-1}x_{2n+1}W_{N/2}^{nm}.
+\end{align}
 
 \subsection{Algorithm \nopunct}
 
