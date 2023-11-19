@@ -8,7 +8,6 @@
 \usepackage{graphicx}			% Insert images
 \usepackage{algorithm}			% Algorithms/pseudocode
 \usepackage{algpseudocode}		% Pseudocode
-\usepackage{minted}				% Code highlighting
 \usepackage{biblatex}			% To create bibliography
 \addbibresource{citation.bib}	% Citation reference for bibliography
 \usepackage[group-separator={\,}]{siunitx} 	% Formatting numbers (use spaces, not commas)
@@ -173,44 +172,6 @@ Now, let us determine an algorithm for performing our grade school multiplicatio
 
 We will not belabor the time-complexity analysis to determine exact counts of the operations involved. In general additions are easier for computers, so we will typically only care about the number of necessary multiplications. From Figure~\ref{fig:gs01} we can see that for $n$ digits, we have $n \times n$ partial products to compute. Accordingly, our grade school multiplication algorithm yields $\mathcal{O}(n^2)$.
 
-\subsection{Code Examples \nopunct}
-
-\begin{minted}[fontsize=\footnotesize]{python}
-def left_to_right(x: list[int]) -> str:
-    """Take a least significant first digit set and return a string representation
-    of the number."""
-    return "".join(str(d) for d in x[::-1])
-    
-def zero_pad(x: list[int], n: int, pad: int=0) -> list[int]:
-    """Zero pad a list to the given length."""
-    return [pad] * (n - len(x)) + x
-
-def grade_school_multiplication(X: list[int], Y: list[int]) -> list[int]:
-    # Pad the shorter list with zeros to match the lengths
-    n = max(len(X), len(Y))
-    X = zero_pad(X, n)
-    Y = zero_pad(Y, n)
-
-    # Initialize the result list W with zeros, length should be 2 * n
-    W = [0] * (2 * n)
-
-    # Multiply all partial products and add them to W
-    for j in range(len(X)):
-        for k in range(len(Y)):
-            W[j + k] += X[j] * Y[k]
-
-    # Handle carries from least significant to most significant digit
-    for i in range(len(W) - 1):
-        carry, W[i] = divmod(W[i], 10)
-        W[i + 1] += carry
-
-    # Remove excess leading zeros, if any, but leave at least one digit
-    while len(W) > 1 and W[-1] == 0:
-        W.pop()
-
-    return W
-\end{minted}
-
 \section{Chunky Grade School Multiplication}
 
 We can make a simple modification to our grade school multiplication that allows us to increase our multiplication speed by a factor of our machine's bit-length. Because this technique is generic, the exact bit-lengths involved in integer hardware multiplication aren't necessarily important. The increase comes by recognizing that instead of multiplying a single digit at a time, we can multiply chunks of digits. We will use $\num{123456} \times \num{987654} = \num{121931812224}$ to illustrate\footnote{Note that the spaces in numbers such as these are strictly for readability purposes. Numbers formatted with spaces like those in the previous multiplication are still single contiguous numbers.} our chunky grade school multiplication algorithm improvement.
@@ -269,60 +230,6 @@ If we group 3 digits then we are using a chunk size of 3 base powers, which we t
 
 From Figure~\ref{fig:cgs01} we can see that we have reduced from $n \times n$ operations to $n/h \times n/h$ operations, which can be a significant real reduction, but still results in a run time of $\mathcal{O}(n^2)$.
 
-\subsection{Code Examples \nopunct}
-
-\begin{minted}[fontsize=\footnotesize]{python}
-def chunkify(x: list[int], h: int) -> list[int]:
-    """Split a list into chunks of size n."""
-    if len(x) % h != 0:
-        raise ValueError(f"Length of list must be a multiple of {h}, \
-        	{len(x)} is not!")
-    n = len(x) // h
-    chunks = [0] * n
-    for ix, val in enumerate(x):
-        chunks[ix // h] += val * 10 ** (ix % h)
-    return chunks
-
-
-def chunky_grade_school_multiplication(
-	X: list[int], Y: list[int], h: int
-) -> list[int]:
-    # Pad the shorter list with zeros to match the lengths
-    n = max(len(X), len(Y))
-    X = zero_pad(X, n)
-    Y = zero_pad(Y, n)
-
-    # Verify X and Y are chunkable
-    if len(X) % h != 0:
-        raise ValueError(f"Length of X must be a multiple of {h}, \
-        	{len(X)} is not!")
-
-    # Chunkify X and Y
-    X = chunkify(X[:], h)
-    Y = chunkify(Y[:], h)
-
-    n = len(X_chunks)
-
-    # Initialize the result list W with zeros, length should be 2 * n
-    W = [0] * (2 * n)
-
-    # Multiply all partial products and add them to W
-    for j in range(len(X)):
-        for k in range(len(Y)):
-            W[j + k] += X[j] * Y[k]
-
-    # Handle carries from least significant to most significant digit
-    for i in range(len(W) - 1):
-        carry, W[i] = divmod(W[i], 10**h)
-        W[i + 1] += carry
-
-    # Remove excess leading zeros, if any, but leave at least one digit
-    while len(W) > 1 and W[-1] == 0:
-        W.pop()
-
-    return W
-\end{minted}
-
 \section{Karatsuba}
 We now turn our attention to Karatsuba's algorithm. In 1960, Andrey Kolmogorov conjectured that $\mathcal{O}(n^2)$ was as fast as multiplication could be achieved. Kolmogorov held a seminar at Moscow University where he presented this and other conjectures. Anatoly Karatsuba, a 23-year-old student, found a divide and conquer deconstruction method that multiplies integers in $\mathcal{O}(n^{\log_2 3})$ that he presented at the next seminar, which Kolmogorov then disbanded (TODO: INSERT REFERENCE HERE). Kolmogorov was so impressed with Karatsuba's algorithm that he wrote a paper for him, which Karatsuba only became aware of after the edits were mailed back to him \cite{karatsuba1995complexity}. Perhaps the best way to motivate some is to say that something is impossible.
 
@@ -367,33 +274,6 @@ Karatsuba's three coefficient products, $ac$, $bd$, and $(a+b)(c+d)$, can be use
 \subsection{Time Complexity Analysis \nopunct}
 
 As we noted above, because Karatsuba allows recursively subdividing the problem in half, using three coefficient multiplications, the runtime is $\mathcal{O}(n^{\log_2{3}})$. $\log_2{3} \approxeq 1.585$, so the runtime complexity of Karatsuba's algorithm is commonly referred to as $\mathcal{O}(n^{1.585})$. 
-
-\subsection{Code Examples \nopunct}
-
-(TODO: Add python for real algorithm and discussion)
-
-\begin{minted}[fontsize=\footnotesize]{matlab}
-function [] = karatsuba(x, y, n)
-	a = floor(x/10^n);
-	b = mod(x,10^n);
-	c = floor(y/10^n);
-	d = mod(y,10^n);
-	
-	A = a*c;
-	B = b*d;
-	C = (a+b)*(c+d);
-	D = A+B;
-	E = C - D;
-	result = A*10^(2*n) + E*10^n + B;
-	fprintf("A=%d\n", A);
-	fprintf("B=%d\n", B);
-	fprintf("C=%d\n", C);
-	fprintf("D=%d\n", D);
-	fprintf("E=%d\n", E);
-	fprintf("%d+%d+%d\n", A*10^(2*n), E*10^n, B);
-	fprintf("=%d\n\n", result);
-end	
-\end{minted}
 
 \section{Toom-Cook}
 
@@ -595,108 +475,6 @@ TODO: Toom-Cook Analysis
 
 Note how quickly the number of terms grows as we partition our multiplicands into larger numbers. In most cases, this limits the practical use of Toom-Cook to three or four partitions.
 
-\subsection{Code Examples \nopunct}
-
-\begin{minted}[fontsize=\footnotesize]{python}
-def pad(x: str, h: int) -> str:
-    r = len(x) % h
-    if r != 0:
-        padding = ['0'] * (h - r)
-        return "".join(padding) + x
-    return x
-
-
-def chunkify(x: str, h: int) -> list[int]:
-    if len(x) % h != 0:
-        print(f"Length of {x} is not an integer multiple of {h}, exiting")
-        exit(1)
-    return [int(x[max(i - 8, 0):i]) for i in range(len(x), 0, -8)]
-
-
-def print_coeffs(chunks: list[int], coeff: str = 'x') -> None:
-    for ix, chunk in enumerate(chunks):
-        print(f"{coeff}_{ix} = {chunk}")
-
-
-def eval_input_poly(x: list[int]) -> list[int]:
-    """x is the coefficients, returns a list of values at our chosen Toom-3 points.
-    The points are {0, 1, -1, -2, \infty}"""
-    gamma = x[0] + x[2]
-    x_of_zero = x[0]
-    x_of_one = gamma + x[1]
-    x_of_minus_one = gamma - x[1]
-    x_of_minus_two = 2*(x_of_minus_one + x[2]) - x[0]
-    x_of_infty = x[2]
-    x_of_t = [x_of_zero, x_of_one, x_of_minus_one, x_of_minus_two, x_of_infty]
-    return x_of_t
-
-
-def multiply_points(x: list[int], y: list[int]) -> list[int]:
-    w = [0] * len(x)
-    for ix in range(len(x)):
-        w[ix] = x[ix]*y[ix]
-    return w
-
-
-def print_points(x: list[int], var: 'str') -> None:
-    print(f"{var}(0)   = {x[0]}")
-    print(f"{var}(1)   = {x[1]}")
-    print(f"{var}(-1)  = {x[2]}")
-    print(f"{var}(-2)  = {x[3]}")
-    print(f"{var}(inf) = {x[4]}")
-
-
-def interp_w(p: list[int]) -> list[int]:
-    """p is the list of points for w"""
-    w = [0] * 5
-    w[0] = p[0]
-    w[1] = (1/2)*p[0] + (1/3)*p[1] - p[2] + (1/6)*p[3] - 2*p[4]
-    w[2] = -p[0] + (1/2)*p[1] + (1/2)*p[2] - p[4]
-    w[3] = -(1/2)*p[0] + (1/6)*p[1] + (1/2)*p[2] - (1/6)*p[3] + 2*p[4]
-    w[4] = p[4]
-    for ix in range(len(w)):
-        w[ix] = int(w[ix])
-    return w
-
-def do_carries(w: list[int], h: int) -> list[int]:
-    for ix in range(len(w)-1):
-        c, w[ix] = divmod(w[ix], 10**h)
-        w[ix+1] += c
-    return w
-
-
-def print_num(num: list[int], var: str = 'w') -> None:
-    print(f"{var} = {''.join([str(x) for x in num[::-1]])}")
-
-
-if __name__ == "__main__":
-    h = 8
-
-    x = "698310488572646777019184"
-    y = "144585992498882884065634"
-    x = pad(x, h)
-    y = pad(y, h)
-    print(f"x = {x}")
-    x_chunks = chunkify(x, h)
-    print_coeffs(x_chunks, 'x')
-    print(f"y = {y}")
-    y_chunks = chunkify(y, h)
-    print_coeffs(y_chunks, 'y')
-
-    x_of_t = eval_input_poly(x_chunks)
-    y_of_t = eval_input_poly(y_chunks)
-    print_points(x_of_t, 'x')
-    print_points(y_of_t, 'y')
-
-    w_of_t = multiply_points(x_of_t, y_of_t)
-    print_points(w_of_t, 'w')
-
-    w = interp_w(w_of_t)
-
-    do_carries(w, h)
-    print_num(w)
-\end{minted}
-
 \section{Convolution}
 
 The Toom-Cook algorithm showed an alternate method to carry out multiplication rather than just optimizing the mechanics of our familiar grade school multiplication process. In the case of Toom-Cook, that was using the multiplicands as coefficients for polynomials, multiplying enough points to represent a resultant polynomial, then interpolating back into the coefficients that represent our desired product. Such alternate methods are often referred to as transforms. We continue on this path of transforms now with the Discrete Fourier Transform (DFT). The Discrete Fourier Transform (DFT) is typically used to take a number of time-domain samples and transform those samples to show the frequency domain content of the signal represented by the time-domain samples. The Fast Fourier Transform (FFT) is a novel method to compute the DFT quickly with the restriction that the number of time domain samples must be a binary power, i.e. $2^m$ for some positive integer $m$. We will utilize the DFT and FFT algorithms that transform a time-domain signal to a frequency domain signal to transform our multiplication process. Before we get to our number theoretic transform, we will review the DFT and FFT algorithms.
@@ -840,13 +618,11 @@ Finally, let's write the equations for the first $N/2$ points \ref{first_fft_sum
 \subsection{Algorithm \nopunct}
 
 \subsection{Time Complexity Analysis \nopunct}
-\subsection{Code Examples \nopunct}
 
 \section{Multiplication via the Complex FFT}
 
 \subsection{Algorithm \nopunct}
 \subsection{Time Complexity Analysis \nopunct}
-\subsection{Code Examples \nopunct}
 
 \section{Modulo Arithmetic}
 
@@ -854,7 +630,6 @@ Finally, let's write the equations for the first $N/2$ points \ref{first_fft_sum
 
 \subsection{Algorithm \nopunct}
 \subsection{Time Complexity Analysis \nopunct}
-\subsection{Code Examples \nopunct}
 
 \section{Conclusion}
 
