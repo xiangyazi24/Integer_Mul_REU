@@ -13,6 +13,9 @@
 \usepackage[group-separator={\,}]{siunitx} 	% Formatting numbers (use spaces, not commas)
 \newcommand{\Mod}[1]{\ (\mathrm{mod}\ #1)}
 
+\algrenewcommand\algorithmicrequire{\textbf{Input:}}
+\algrenewcommand\algorithmicensure{\textbf{Output:}}
+
 %--------Theorem Environments--------
 %theoremstyle{plain} --- default
 \newtheorem{thm}{Theorem}[section]
@@ -475,7 +478,7 @@ TODO: Toom-Cook Analysis
 
 Note how quickly the number of terms grows as we partition our multiplicands into larger numbers. In most cases, this limits the practical use of Toom-Cook to three or four partitions.
 
-\section{Convolution}
+\section{Convolution, the DFT, and the FFT}
 
 The Toom-Cook algorithm showed an alternate method to carry out multiplication rather than just optimizing the mechanics of our familiar grade school multiplication process. In the case of Toom-Cook, that was using the multiplicands as coefficients for polynomials, multiplying enough points to represent a resultant polynomial, then interpolating back into the coefficients that represent our desired product. Such alternate methods are often referred to as transforms. We continue on this path of transforms now with the Discrete Fourier Transform (DFT). The Discrete Fourier Transform (DFT) is typically used to take a number of time-domain samples and transform those samples to show the frequency domain content of the signal represented by the time-domain samples. The Fast Fourier Transform (FFT) is a novel method to compute the DFT quickly with the restriction that the number of time domain samples must be a binary power, i.e. $2^m$ for some positive integer $m$. We will utilize the DFT and FFT algorithms that transform a time-domain signal to a frequency domain signal to transform our multiplication process. Before we get to our number theoretic transform, we will review the DFT and FFT algorithms.
 
@@ -557,7 +560,7 @@ Obviously, from here and our examples before, the time complexity of the convolu
 \subsection{The Fast Fourier Transform}
 The Fast Fourier Transform algorithm created by Cooley and Tukey in 1965 \cite{cooley1965algorithm} creates a divide-and-conquer method compute the DFT and take advantage of the symmetry and rotation properties of the complex exponentials used in the DFT. Recall the equation for the DFT:
 \begin{equation*}
-	X_m = \sum_{n=0}^{N-1}x_n e^{-i2\pi nm/N}.
+	X(m) = \sum_{n=0}^{N-1}x(n) e^{-i2\pi nm/N}.
 \end{equation*}
 And the twiddle factor expression:
 \begin{equation*}
@@ -565,7 +568,7 @@ And the twiddle factor expression:
 \end{equation*}
 The DFT with the twiddle factor then becomes:
 \begin{equation*}
-	X_m = \sum_{n=0}^{N-1}x_n W^{mn}.
+	X(m) = \sum_{n=0}^{N-1}x(n) W^{mn}.
 \end{equation*}
 And finally, the FFT will make heavy use of the symmetry and periodicity properties of complex exponentials \cite{proakis1995digital}:
 \begin{align*}
@@ -585,14 +588,15 @@ where we have simply factored out the constant $W_N^m$ from the $(2n+1)$ odd ter
 we can write
 \begin{equation}
 	\label{first_fft_summation}
-	X(m) = \sum_{n=0}^{N/2-1}x_{2n}W_{N/2}^{nm} + W_N^m\sum_{n=0}^{N/2-1}x_{2n+1}W_{N/2}^{nm}
+	X(m) = \sum_{n=0}^{N/2-1} x(2n) W_{N/2}^{nm} + W_N^m \sum_{n=0}^{N/2-1} x(2n+1) W_{N/2}^{nm}
 \end{equation}
 where $m$ is in the range of $0$ to $N/2-1$. We can substitute $(m+N/2)$ for $m$ to obtain the other half of the equation:
 \begin{align}
 	\label{complex_second_half_fft}
-	X(m+N/2) = \sum_{n=0}^{N/2-1}x_{2n}W_{N/2}^{n(m+N/2)} + W_N^{(m+N/2)}\sum_{n=0}^{N/2-1}x_{2n+1}W_{N/2}^{n(m+N/2)}.
+	X(m+N/2) = \sum_{n=0}^{N/2-1} x(2n) W_{N/2}^{n(m+N/2)} + W_N^{(m+N/2)} \sum_{n=0}^{N/2-1} x(2n+1) W_{N/2}^{n(m+N/2)}.
 \end{align}
-As \cite{lyons1997understanding} notes, this looks worse, but we can use our complex exponential properties to reduce the complexity of the equations.
+
+As Lyons notes in \cite{lyons1997understanding}, this looks worse, but we can use our complex exponential properties to reduce the complexity of the equations.
 \begin{align}
 	\label{simplify_second_sum}
 	W_{N/2}^{n(m+N/2)} &= W_{N/2}^{nm} W_{N/2}^{n(N/2)} = W_{N/2}^{nm} e^{-i2 \pi n(N/2)/(N/2)}  \\
@@ -604,20 +608,155 @@ as $e^{-i 2 \pi n} = 1$ for any integer $n$. Similarly, we may reduce the twiddl
 	W_N^{(m+N/2)} &= W_N^m W_N^{N/2} = W_N^m e^{-i 2 \pi (N/2)/N} \\
 	&= W_N^m e^{-i \pi} = W_N^m(-1) = -W_N^m.
 \end{align}
-We may now substitute \ref{simplify_twiddle} and \ref{simplify_twiddle} into \ref{complex_second_half_fft} to simplify the second half of the FFT:
+
+We may now substitute \ref{simplify_second_sum} and \ref{simplify_twiddle} into \ref{complex_second_half_fft} to simplify the second half of the FFT:
 \begin{equation}
 	\label{second_fft_summation}
-	X(m+N/2) = \sum_{n=0}^{N/2-1}x_{2n}W_{N/2}^{nm} - W_N^m\sum_{n=0}^{N/2-1}x_{2n+1}W_{N/2}^{nm}.
+	X(m+N/2) = \sum_{n=0}^{N/2-1} x(2n) W_{N/2}^{nm} - W_N^m \sum_{n=0}^{N/2-1} x(2n+1) W_{N/2}^{nm}.
 \end{equation}
-Finally, let's write the equations for the first $N/2$ points \ref{first_fft_summation} and second $N/2$ points \ref{second_fft_summation} together:
+
+Finally, let's write the equations for the first $N/2$ points from equation~\ref{first_fft_summation} and second $N/2$ points from equation~\ref{second_fft_summation} together:
 \begin{align}
-	X(m) &= \sum_{n=0}^{N/2-1}x_{2n}W_{N/2}^{nm} + W_N^m\sum_{n=0}^{N/2-1}x_{2n+1}W_{N/2}^{nm} \\
-	X(m+N/2) &= \sum_{n=0}^{N/2-1}x_{2n}W_{N/2}^{nm} - W_N^m\sum_{n=0}^{N/2-1}x_{2n+1}W_{N/2}^{nm}.
+	X(m) &= \sum_{n=0}^{N/2-1} x(2n) W_{N/2}^{nm} + W_N^m \sum_{n=0}^{N/2-1} x(2n+1) W_{N/2}^{nm} \\
+	X(m+N/2) &= \sum_{n=0}^{N/2-1} x(2n) W_{N/2}^{nm} - W_N^m \sum_{n=0}^{N/2-1} x(2n+1) W_{N/2}^{nm}.
 \end{align}
+
+We can now see how similar these two equations are, and start to see how this divide and conquer vastly reduces our computations. In practice, the number of bits for a particular multiply is fixed, and this allows us to compute the twiddle factors ahead of time and store them in a lookup table. Let's continue the divide-and-conquer approach. We can further split the even and odd summations:
+\begin{align*}
+	\sum_{n=0}^{N/2-1} x(2n) W_{N/2}^{nm} = \sum_{n=0}^{N/4-1} x(4n) W_{N/2}^{2nm} + \sum_{n=0}^{N/4-1} x(4n+2) W_{N/2}^{(2n+1)m}.
+\end{align*}
+
+We can use $W_{N/2}^{2nm} = W_{N/4}^{nm}$ to simplify these two $N/4$-point DFTs:
+\begin{equation*}
+	\sum_{n=0}^{N/2-1} x(2n) W_{N/2}^{nm} = \sum_{n=0}^{N/4-1} x(4n) W_{N/4}^{nm} + W_{N/2}^m \sum_{n=0}^{N/4-1} x(4n+2) W_{N/4}^{nm}.
+\end{equation*}
+
+Similarly,
+\begin{equation*}
+	\sum_{n=0}^{N/2-1} x(2n+1) W_{N/2}^{nm} = \sum_{n=0}^{N/4-1} x(4n+1) W_{N/4}^{nm} + W_{N/2}^m \sum_{n=0}^{N/4-1} x(4n+3) W_{N/4}^{nm}.
+\end{equation*}
+
+At this point a graphic may be instructive. We can think of the FFT as a set of recursive equations where we work backward through the DFT summation, halving the computed sum at each step. Figure~\ref{fig:fft_dit_8point} shows how this would look for an 8-point FFT. Decimation in time refers to the fact that we are halving the computed time series at each step - how we separate the summation into $(2n)$ and $(2n+1)$ samples. If we separated the The DFT output series into even and odd samples then we would be creating a decimation-in-frequency DFT. Both approaches are used in practice and yield the same result, aside from quantization error. 
+\begin{figure}
+	\centering
+	\includegraphics[height=7in]{img/fft_dit_8point}
+	\caption{8-point Decimation in Time FFT}
+	\label{fig:fft_dit_8point}
+\end{figure}
+
+Figure~\ref{fig:fft_dit_8point} shows an 8-point DFT with its various butterfly stages. Reconciling the decimation in time FFT butterfly stages with the equations is not necessarily intuitive. In a moment, we will enumerate the various butterflies at each stage to show how the computations break down. For now, what is intuitive is the $\mathcal{O}(n)$ multiplications at each stage, and that there are $log_2{n}$ total stages to the radix-2 decimation-in-time FFT. Hence the FFT is a $\mathcal{O}(n log{n})$ algorithm. Now let's turn to computing the FFT at each stage. We start with the output, which we know is simply
+\begin{equation*}
+	X(m) = \sum_{n=0}^{N-1}x(n) W^{nm}.
+\end{equation*}
+We split this into the two equations shown into a summation of even and odd time samples (decimated in time), shown below for reference:
+\begin{align*}
+	X(m) &= \sum_{n=0}^{N/2-1} x(2n) W_{N/2}^{nm} + W_N^m \sum_{n=0}^{N/2-1} x(2n+1) W_{N/2}^{nm} \\
+	X(m+N/2) &= \sum_{n=0}^{N/2-1} x(2n) W_{N/2}^{nm} - W_N^m \sum_{n=0}^{N/2-1} x(2n+1) W_{N/2}^{nm}.
+\end{align*}
+
+\begin{figure}
+	\centering
+	\includegraphics[height=8in]{img/fft_dit_16point}
+	\caption{16-point Decimation in Time FFT}
+	\label{fig:fft_dit_16point}
+\end{figure}
+
+\newpage
+
+\begin{figure}[h]
+	\centering
+	\advance\leftskip-0.75in
+	\includegraphics[height=6in]{img/fft_dit_16point_stage4}
+	\caption{16-point Decimation in Time FFT Stage 4}
+	\label{fig:fft_dit_16point_stage4}
+\end{figure}
+
+\newpage
+
+Remember, we go to the left to halve our summations again. This brings us to the third stage in our 16-point FFT, where we have divided the total points, 16 in this case, by four ($N/4$). Figure~\ref{fig:fft_dit_16point_stage3} shows these four summations.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[height=6in]{img/fft_dit_16point_stage3}
+	\caption{16-point Decimation in Time FFT Stage 3}
+	\label{fig:fft_dit_16point_stage3}
+\end{figure}
+
+\newpage
+
+Dividing our sums again we move one more stage to the left to the second stage in our 16-point FFT. Not that here we have eight summations. Figure~\ref{fig:fft_dit_16point_stage2} shows the summations for the second stage of our 16-point FFT.
+
+\begin{figure}[h]
+	\centering
+	\advance\leftskip-0.5in
+	\includegraphics[height=6in]{img/fft_dit_16point_stage2}
+	\caption{16-point Decimation in Time FFT Stage 2}
+	\label{fig:fft_dit_16point_stage2}
+\end{figure}
+
+\newpage
+
+Finally, we move once again to the left, arriving at the first stage of our 16-point FFT, shown in Figure~\ref{fig:fft_dit_16point_stage1}. Although we have kept the sums general, it is trivial to derive the sum for this first stage. For instance, looking at the first equation $X(m)$, we have
+\begin{align*}
+	X(m) &= \sum_{n=0}^{N/16-1} x(16n) W_{N/16}^{nm} + W_{N/8}^m \sum_{n=0}^{N/16-1} x(16n+8) W_{N/16}^{nm} \\
+	X(0) &= x(0) \cdot W_1^0 + W_2^0 \cdot x(8) \cdot W_1^0 = x(0) + x(8)
+\end{align*}
+
+\begin{figure}[h]
+	\centering
+	\advance\leftskip-0.75in
+	\includegraphics[height=6in]{img/fft_dit_16point_stage1}
+	\caption{16-point Decimation in Time FFT Stage 1}
+	\label{fig:fft_dit_16point_stage1}
+\end{figure}
+
+\newpage
+Similarly, we can derive the second point $X(1)$:
+\begin{align*}
+	X(m) &= \sum_{n=0}^{N/16-1} x(16n) W_{N/16}^{nm} - W_{N/8}^m \sum_{n=0}^{N/16-1} x(16n+8) W_{N/16}^{nm} \\
+	X(1) &= x(0) \cdot W_1^0 - W_2^1 \cdot x(8) \cdot W_1^0 = x(0) - e^{-j 2 \pi / 2} \cdot x(8) = x(0) + x(8)
+\end{align*}
+
+We derive $X(2)$ and $X(3)$ for further demonstration:
+\begin{align*}
+	X(m) &= \sum_{n=0}^{N/16-1} x(16n+4) W_{N/16}^{nm} + W_{N/8}^m \sum_{n=0}^{N/16-1} x(16n+12) W_{N/16}^{nm} \\
+	X(2) &= x(4) \cdot W_1^0 + W_2^2 \cdot x(8) \cdot W_1^0 = x(12) + e^{-j 2 \pi 2 / 2} \cdot x(12) = x(4) + x(12) \\
+	X(m) &= \sum_{n=0}^{N/16-1} x(16n+4) W_{N/16}^{nm} - W_{N/8}^m \sum_{n=0}^{N/16-1} x(16n+12) W_{N/16}^{nm} \\
+	X(3) &= x(4) \cdot W_1^0 - W_2^1 \cdot x(12) \cdot W_1^0 = x(4) - e^{-j 2 \pi 3 / 2} \cdot x(12) = x(4) + x(12)
+\end{align*}
+
+and so forth.
 
 \subsection{Algorithm \nopunct}
 
+The recursive FFT algorithm from [] is reproduced in Algorithm~\ref{fft_algo}
+
+\begin{algorithm}[H]
+	\caption{Fast Fourier Transform Decimation-in-Time}
+	\label{fft_algo}
+	\begin{algorithmic}
+		\Require $a$, an $n$-length coefficient vector where $n$ is a power of $2$, and $w$, a primitive root of unity
+		\Ensure A vector, $y$, of values of the polynomial for $a$ at the $n$th roots of unit.
+		\If{$n=1$}
+			\State \Return{$y=a$}
+		\EndIf
+		\State{$x \leftarrow w_0$}
+		\State{$a_{even} \leftarrow [a_0, a_2, a_4, ..., a_{n-2}] $}
+		\State{$a_{odd} \leftarrow [a_1, a_3, a_5, ..., a_{n-1}] $}
+		\State{$y_{even} \leftarrow FFT(a_{even}, w^2)$}
+		\State{$y_{odd} \leftarrow FFT(a_{odd}, w^2) $}
+		\For{$i \leftarrow 0 \text{ to } n/2-1 $}
+			\State{$y_i \leftarrow y_{i,even} + x \cdot y_{i,odd} $}
+			\State{$y_{i+n/2} \leftarrow y_{i,even} - x \cdot y_{i,odd} $}
+			\State{$x \leftarrow x \cdot w$}
+		\EndFor
+		\State \Return{$y$}
+	\end{algorithmic}
+\end{algorithm}
+
 \subsection{Time Complexity Analysis \nopunct}
+
+As we have given a large number of equations, examples, and diagrams, it should be clear that the FFT recursively divides summation calculations into half. Thus, the FFT decreases the stages of the DFT to $\mathcal{O}(log{n})$, with $\mathcal{O}(n)$ operations in each stage. In total this gives a run time complexity of $\mathcal{O}(n log{n})$. In practice the FFT is highly efficient as the number of points is known ahead of time and all twiddle factors may be precomputed and stored.
 
 \section{Multiplication via the Complex FFT}
 
