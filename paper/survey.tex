@@ -729,14 +729,14 @@ and so forth.
 
 \subsection{Algorithm \nopunct}
 
-The recursive FFT algorithm from [] is reproduced in Algorithm~\ref{fft_algo}
+The recursive FFT algorithm from \cite{goodrich2015algorithm} is reproduced in Algorithm~\ref{fft_algo}. Note that typically $n$ is known ahead of time and we can precompute the maximum $W_N$ roots of unity and use that set to derive all others (e.g. $W_4^2 = W_8^4$).
 
 \begin{algorithm}[H]
 	\caption{Fast Fourier Transform Decimation-in-Time}
 	\label{fft_algo}
 	\begin{algorithmic}
 		\Require $a$, an $n$-length coefficient vector where $n$ is a power of $2$, and $w$, a primitive root of unity
-		\Ensure A vector, $y$, of values of the polynomial for $a$ at the $n$th roots of unit.
+		\Ensure A vector, $y$, of values of the polynomial for $a$ at the $n$th roots of unity.
 		\If{$n=1$}
 			\State \Return{$y=a$}
 		\EndIf
@@ -757,6 +757,14 @@ The recursive FFT algorithm from [] is reproduced in Algorithm~\ref{fft_algo}
 \subsection{Time Complexity Analysis \nopunct}
 
 As we have given a large number of equations, examples, and diagrams, it should be clear that the FFT recursively divides summation calculations into half. Thus, the FFT decreases the stages of the DFT to $\mathcal{O}(log{n})$, with $\mathcal{O}(n)$ operations in each stage. In total this gives a run time complexity of $\mathcal{O}(n log{n})$. In practice the FFT is highly efficient as the number of points is known ahead of time and all twiddle factors may be precomputed and stored.
+
+\subsection{The Inverse DFT and FFT}
+
+The DFT has an inverse:
+\begin{equation*}
+	x(n) = \frac{1}{N} \sum_{m=0}^{N-1} X(m) e^{j 2 pi m / N}
+\end{equation*}
+and the Inverse FFT derivation is much the same as the FFT. We leave this as an exercise for the reader. Note the $1/N$ term at the front. Fortunately, because we have restricted $N$ to be a binary power, we may simply shift the result of the summation, which is the same as dividing by a binary power.
 
 \section{Multiplication via the Complex FFT}
 
