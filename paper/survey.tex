@@ -76,7 +76,7 @@ Large integer multiplication is pervasive in our lives in the form of cryptograp
 
 How do computers multiply integers larger than the number of bits within dedicated hardware? This paper provides a survey of several large integer multiplication algorithms that answer this question. The aim of the paper is to provide a friendly introduction with many examples such that undergraduate students can look past the complexity of these algorithms, grasp the fundamentals, and hopefully understand some of the beauty in the algorithms. 
 
-The title of the paper is a tribute to Dr. Silverman's wonderful \textit{A Friendly Introduction to Number Theory}. We will start with grade school multiplication, then cover a simple but useful extension that allows multiplication in ``chunks''. We then cover the first advance in nearly 4000 years \cite{burton1985history}, Karatsuba's algorithm. Next we will discuss the Toom-Cook algorithm that is a generalization of Karatsuba's algorithm. Next we cover the fundamentals of the Discrete Fourier Transform (DFT) and Fast Fourier Transform (FFT) to understand how these algorithms are used to multiply large integers. Finally, we cover the Sch\"{o}nhage-Strassen multiplication algorithm, which gets us to $\mathcal{O}(n \log n \log \log n)$ time complexity.
+The title of the paper is a tribute to Dr. Silverman's wonderful \textit{A Friendly Introduction to Number Theory}. We will start with grade school multiplication, then cover a simple but useful extension that allows multiplication in ``chunks''. We then cover the first advance in nearly 4000 years \cite{burton1985history}, Karatsuba's algorithm. Next we will discuss the Toom-Cook algorithm that is a generalization of Karatsuba's algorithm. Next we cover the fundamentals of the Discrete Fourier Transform (DFT) and Fast Fourier Transform (FFT) to understand how these algorithms are used to multiply large integers. Finally, we cover a few aspects of prime numbers and the Sch\"{o}nhage-Strassen multiplication algorithm, which gets us to $\mathcal{O}(n \log{n} \log{\log{n}})$ time complexity.
 
 \subsection{Prerequisites}
 There are surprisingly few prerequisites to understand this material. The most important prerequisites are some familiarity with mathematical notation and the desire to understand large integer multiplication. Grade school arithmetic and trigonometry through complex numbers and the unit circle is all that is required. The more advanced algorithms would benefit from familiarity with matrix manipulation, Linear Algebra, and Calculus, but these are not strict prerequisites. As this is a friendly introduction, we have tried to make the algorithms available to the widest audience possible, and hence avoided discussions that require more advanced mathematics. Suggestions to make the material available to an even wider audience are welcome.
@@ -497,7 +497,7 @@ The DFT then becomes:
 	X_m = \sum_{n=0}^{N-1}x_n W_N^{nm}.
 \end{equation*}
 
-Why are we bothering to introduce the DFT and how to transform a signal from the time domain to the frequency domain? Because it turns out that convolution in the time domain, at least for coefficients, is the same as multiplication. The issue with this is that the convolution in the time domain is slow, the same as our $\mathcal{O}(n^2)$ from grade school multiplication. But it turns out that convolution in the time domain is the same thing as multiplication in the frequency domain. The Fast part of the FFT means we can perform our transform in $\mathcal{O}(n \log n)$. We can quickly transform our signal made up of polynomial coefficients (our time domain signal) using the FFT, do a point-wise multiplication in the frequency domain, then transform back into the time domain by computing an inverse FFT. We are now transforming and multiplying transforms to complete our large integer multiplication! 
+Why are we bothering to introduce the DFT and how to transform a signal from the time domain to the frequency domain? Because it turns out that convolution in the time domain, at least for coefficients, is the same as multiplication. The issue with this is that the convolution in the time domain is slow, the same as our $\mathcal{O}(n^2)$ from grade school multiplication. But convolution in the time domain is the same as multiplication in the frequency domain. The Fast part of the FFT means we can perform our transform in $\mathcal{O}(n \log n)$. We can quickly transform our signal made up of polynomial coefficients (our time domain signal) using the FFT, do a point-wise multiplication in the frequency domain, then transform back into the time domain by computing an inverse FFT. We are now transforming and multiplying transforms to complete our large integer multiplication! 
 
 Let's first demonstrate that convolution of polynomial coefficients is the same as multiplication. Let's use $1234 \times 6789$ as our example. In this case, we have
 \begin{align*}
@@ -639,6 +639,7 @@ Similarly,
 At this point a graphic may be instructive. We can think of the FFT as a set of recursive equations where we work backward through the DFT summation, halving the computed sum at each step. Figure~\ref{fig:fft_dit_8point} shows how this would look for an 8-point FFT. Decimation in time refers to the fact that we are halving the computed time series at each step - how we separate the summation into $(2n)$ and $(2n+1)$ samples. If we separated the The DFT output series into even and odd samples then we would be creating a decimation-in-frequency DFT. Both approaches are used in practice and yield the same result, aside from quantization error. 
 \begin{figure}
 	\centering
+	\advance\leftskip-0.33in
 	\includegraphics[height=7in]{img/fft_dit_8point}
 	\caption{8-point Decimation in Time FFT}
 	\label{fig:fft_dit_8point}
@@ -677,6 +678,7 @@ Remember, we go to the left to halve our summations again. This brings us to the
 
 \begin{figure}[h]
 	\centering
+	\advance\leftskip-0.75in
 	\includegraphics[height=6in]{img/fft_dit_16point_stage3}
 	\caption{16-point Decimation in Time FFT Stage 3}
 	\label{fig:fft_dit_16point_stage3}
@@ -704,7 +706,7 @@ Finally, we move once again to the left, arriving at the first stage of our 16-p
 
 \begin{figure}[h]
 	\centering
-	\advance\leftskip-0.75in
+	\advance\leftskip-0.25in
 	\includegraphics[height=6in]{img/fft_dit_16point_stage1}
 	\caption{16-point Decimation in Time FFT Stage 1}
 	\label{fig:fft_dit_16point_stage1}
@@ -792,10 +794,11 @@ Algorithm \ref{fft_mul}, modified slightly from from \cite{crandall2005prime}, p
 	\end{algorithmic}
 \end{algorithm}
 
-For our example we can revisit the same multiplication from section \ref{toom_cook}, $\num{698310488572646777019184} \times \num{144585992498882884065634} = 
+For our example we can revisit the same multiplication from section \ref{toom_cook}, \\
+$\num{698310488572646777019184} \times \num{144585992498882884065634} = \\
 \num{100965915062655948833325499910140535809533122656}$. First we set 
 \begin{align*}
-	x &= \{4, 8, 1, ..., 9, 6\},
+	x &= \{4, 8, 1, ..., 9, 6\}, \\
 	y &= \{4, 3, 6, ..., 4, 1\}.
 \end{align*}
 A quick count shows $max(x,y)=24$, so we set $D= 2^{\lceil log_2 {24}} \rceil = 32$ and $2D = 64$, zero padding the coefficients for $x$ and $y$. We can now take the FFT of $x$ and $y$, $X=FFT(x)$ and $Y = FFT(y)$, respectively. The first and last few terms of each are:
@@ -808,9 +811,9 @@ We then multiply the elements of $X$ and $Y$ together to obtain $Z$,
 	Z &= X \cdot Y, \\
 	Z &= \{15730.0, -6871.016 -7485.332i, -67.622 +2008.389i, ..., -6871.016 + 7485.332i\}.
 \end{align*}
-We then take the IFFT of $Z$ to obtain $z$, round the results:
+We then take the IFFT of $Z$ to obtain $z$ and round the results:
 \begin{align*}
-	z &= IFFT(Z),
+	z &= IFFT(Z), \\
 	z &= round(z), \\
 	z &= \{16, 44, 52, ..., 68, 33, 6, 0, ..., 0\}.
 \end{align*}
@@ -824,11 +827,12 @@ $\num{698310488572646777019184} \times \num{144585992498882884065634} = \\
 
 
 \subsection{Floating-Point Complications and Time Complexity Analysis \nopunct} \label{floating_point_complications}
-There are multiple issues using the FFT to perform large integer multiplication. First, as the interim results from the prior section showed, the FFT produces complex, floating-point values. As we also saw, even though we are using single-digit coefficients, the FFT can become quite large for a single entry. So there are two issues: numerical accuracy/precision, and preventing overflow for large enough entries. 
+There are multiple issues using the FFT to perform large integer multiplication. First, as the interim results from the prior section showed, the FFT requires complex, floating-point values. As we also saw, even though we are using single-digit coefficients, the FFT can become quite large for a single entry. So there are two issues: numerical accuracy/precision, and preventing overflow for large enough entries. 
 
-The FFT is remarkably well behaved in terms of stability\cite{higham2002accuracy}, but we must have enough bits to ensure that we carry enough precision through the FFT calculations\cite{proakis1995digital}. The methods to determine when to split these calculations further to provide smaller blocks of numbers or more precision are quite involved. Interested parties are referred to \cite{brent2010modern} which provides significant detail. These details involving the FFT computations for arbitrarily-sized numbers require another $log{log{n}}$ term in our big O notation, yielding a final time complexity of $\mathcal{O}(n log{n} log{log{n}})$\cite{higham2002accuracy}\cite{proakis1995digital}\cite{brent2010modern}.
+The FFT is remarkably well behaved in terms of stability\cite{higham2002accuracy}, but we must have enough bits to ensure that we carry enough precision through the FFT calculations\cite{proakis1995digital}. At a minimum, we need to be able to differentiate twiddle factors, or points on the unit circle. The methods to determine when to split these calculations further to provide smaller blocks of numbers or more precision are quite involved. Interested parties are referred to \cite{brent2010modern} which provides a helpful amount of detail. These details involving the FFT computations for arbitrarily-sized numbers require another $\log{\log{n}}$ term in our big O notation, yielding a final time complexity of $\mathcal{O}(n \log{n} \log{\log{n}})$\cite{higham2002accuracy}\cite{proakis1995digital}\cite{brent2010modern}.
 
 \section{Modulo Arithmetic}
+
 
 \section{Sch\"{o}nhage-Strassen}
 
