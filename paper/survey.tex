@@ -278,7 +278,7 @@ Karatsuba's three coefficient products, $ac$, $bd$, and $(a+b)(c+d)$, can be use
 
 As we noted above, because Karatsuba allows recursively subdividing the problem in half, using three coefficient multiplications, the runtime is $\mathcal{O}(n^{\log_2{3}})$. $\log_2{3} \approxeq 1.585$, so the runtime complexity of Karatsuba's algorithm is commonly referred to as $\mathcal{O}(n^{1.585})$. 
 
-\section{Toom-Cook}
+\section{Toom-Cook} \label{toom_cook}
 
 The Toom-Cook algorithm generalizes the divide and conquer approach used in Karatsuba. Instead of splitting the multiplicands into two parts, Toom-Cook splits the multiplication into $r$ parts. Toom-Cook then uses the splits as coefficients in a polynomial, as we have done before. The clever part of Toom-Cook is to use these splits parts in the $X$ and $Y$ coefficients to represent polynomials $x(t)$ and $y(t)$, then multiply those polynomials together. Because the $x(t)$ and $y(t)$ polynomials will be of degree $r-1$, their product will be of degree $r-2$, at most. We can evaluate the multiplication of $x(t)$ and $y(t)$ at $2r-1$ points to recover the product $w(t)$, of degree $2r-2$. Hence we are now multiplying together polynomials to recover integers! 
 
@@ -766,10 +766,67 @@ The DFT has an inverse:
 \end{equation*}
 and the Inverse FFT derivation is much the same as the FFT. We leave this as an exercise for the reader. Note the $1/N$ term at the front. Fortunately, because we have restricted $N$ to be a binary power, we may simply shift the result of the summation, which is the same as dividing by a binary power.
 
-\section{Multiplication via the Complex FFT}
+\section{Multiplication via the FFT}
+Now that we have the tools of the FFT, multiplication via the FFT is rather straightforward\footnote{Note that we are giving the simplest form of this FFT multiply. Section \ref{floating_point_complications} discusses additional considerations for practical use of the algorithm.}. Given our digits, we pad both digits to some binary power $D$, then zero-pad to $2D$. This is to account for the typical $2n$ bits necessary from an $n$-bit multiply. Given that we are using the radix-2 FFT, we extend $n$ to $D$ and the $2n$ to $2D$. We then perform the FFT on our input coefficients, multiply each of the coefficients together, then perform the IFFT. We then adjust our carries across bases and are finished. 
+
+
 
 \subsection{Algorithm \nopunct}
-\subsection{Time Complexity Analysis \nopunct}
+
+Algorithm \ref{fft_mul}, modified slightly from from \cite{crandall2005prime}, provides the basic algorithm for multiplying two positive integers using the FFT and IFFT. 
+
+\begin{algorithm}
+	\caption{Basic FFT Multiplication}
+	\label{fft_mul}
+	\begin{algorithmic}
+		\Ensure Given two polynomial coefficient vectors $x$, $y$ with length less than or equal to a binary power $D$.
+		\State Zero-pad $x$, $y$ to length $2D$.
+		\State $X = FFT(x)$
+		\State $Y = FFT(y)$
+		\State $Z = X \cdot Y$ (element-wise multiplication)
+		\State $z = IFFT(z)$
+		\State $z = round(z)$ (See section \ref{floating_point_complications} regarding this step.)
+		\State $z = carry\_ones(z)$
+		\State $z = remove\_leading\_zeros(z)$ \\
+		\Return z
+	\end{algorithmic}
+\end{algorithm}
+
+For our example we can revisit the same multiplication from section \ref{toom_cook}, $\num{698310488572646777019184} \times \num{144585992498882884065634} = 
+\num{100965915062655948833325499910140535809533122656}$. First we set 
+\begin{align*}
+	x &= \{4, 8, 1, ..., 9, 6\},
+	y &= \{4, 3, 6, ..., 4, 1\}.
+\end{align*}
+A quick count shows $max(x,y)=24$, so we set $D= 2^{\lceil log_2 {24}} \rceil = 32$ and $2D = 64$, zero padding the coefficients for $x$ and $y$. We can now take the FFT of $x$ and $y$, $X=FFT(x)$ and $Y = FFT(y)$, respectively. The first and last few terms of each are:
+\begin{align*}
+	X = \{121, 37.667 -86.807i, -24.665 -27.021i, ..., 37.666 + 86.807i\}, \\
+	Y = \{130, 43.664 -98.099i, -39.298 -38.374i, ..., 43.664 + 98.099i\}.
+\end{align*}
+We then multiply the elements of $X$ and $Y$ together to obtain $Z$, 
+\begin{align*}
+	Z &= X \cdot Y, \\
+	Z &= \{15730.0, -6871.016 -7485.332i, -67.622 +2008.389i, ..., -6871.016 + 7485.332i\}.
+\end{align*}
+We then take the IFFT of $Z$ to obtain $z$, round the results:
+\begin{align*}
+	z &= IFFT(Z),
+	z &= round(z), \\
+	z &= \{16, 44, 52, ..., 68, 33, 6, 0, ..., 0\}.
+\end{align*}
+At this point we carry the ones from each base power to the next in our resultant coefficient polynomial:
+\begin{align*}
+	z = \{6, 5, 6, ..., 9, 0, 0, 1, ..., 0\}.
+\end{align*}
+We can then remove all the leading zeroes, or remove all consecutive zero entries descending through the polynomial coefficient degrees until we reach the first non-zero entry. At that point, we have our answer: \\
+$\num{698310488572646777019184} \times \num{144585992498882884065634} = \\
+\num{100965915062655948833325499910140535809533122656}$.
+
+
+\subsection{Floating-Point Complications and Time Complexity Analysis \nopunct} \label{floating_point_complications}
+There are multiple issues using the FFT to perform large integer multiplication. First, as the interim results from the prior section showed, the FFT produces complex, floating-point values. As we also saw, even though we are using single-digit coefficients, the FFT can become quite large for a single entry. So there are two issues: numerical accuracy/precision, and preventing overflow for large enough entries. 
+
+The FFT is remarkably well behaved in terms of stability\cite{higham2002accuracy}, but we must have enough bits to ensure that we carry enough precision through the FFT calculations\cite{proakis1995digital}. The methods to determine when to split these calculations further to provide smaller blocks of numbers or more precision are quite involved. Interested parties are referred to \cite{brent2010modern} which provides significant detail. These details involving the FFT computations for arbitrarily-sized numbers require another $log{log{n}}$ term in our big O notation, yielding a final time complexity of $\mathcal{O}(n log{n} log{log{n}})$\cite{higham2002accuracy}\cite{proakis1995digital}\cite{brent2010modern}.
 
 \section{Modulo Arithmetic}
 
