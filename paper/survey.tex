@@ -85,7 +85,7 @@ There are surprisingly few prerequisites to understand this material. The most i
 The density and abstract symbolic nature of mathematical notation makes understanding the underlying concepts expressed by the notation extremely challenging. Human beings are primarily visual learners, and mathematical notation purposefully condenses and symbolizes ideas into abstract notation that does not readily translate to an intuitive understanding of the underlying concepts. Being able to understand the notation takes time and practice. Developing an intuitive understanding of what the notation represents even more so. We have striven to provide a non-trivial example for each algorithm/transform/concept, but because we are unpacking concise notation, the sheer volume of arithemtic produced can provide its own challenge. Do not despair - if you find yourself lost in the details, remind yourself of what we are trying to compute and the underlying concepts behind the computations and notation. After all, we're just multiplying integers, how complex can it be?
 
 \subsection{Software}
-The companion software for this paper can be found on GitHub at (TODO: Insert github link here) and GitLab at (TODO: Insert gitlab link here). All of the examples shown are solved in software and stepped through, as well as all algorithms illustrated. Most programs were initially done in Python as support for large integer arithmetic is built into the language which makes testing easy, but the programs are also available (to some extent) in Java, MATLAB, and C/C++. 
+The companion software for this paper can be found on GitHub at \textit{github.com/xiangyazi24/Integer\_Mul\_REU}. All of the examples shown are solved in software, as well as all algorithms illustrated.
 
 \section{Grade School Multiplication}
 Multiplication dates back to at least 2000 B.C. \cite{burton1985history} and of course we all learn how to multiply integers in grade school. A review of this algorithm gives us a grasp of the terminology and notation we will use throughout the rest of this paper to discuss multiplication algorithms. We start with a representation for integers, which will be useful for later algorithms.
@@ -136,12 +136,12 @@ Let's work an example multiplying $9999 \times 9999 = 99980001$ in base 10. We h
 
 Let us now discuss our (modified) grade school multiplication algorithm.
 
-\subsection{Algorithm \nopunct}
+\subsection{Algorithm \nopunct}\label{gs}
 
-For grade school multiplication, let us use the values $x=123$ and $y=789$ to illustrate our algorithm. Instead of simply multiplying the ones' digits $9$ and $3$ and writing the new ones' digit $7$ and carrying the $2$, we will write the individual products in each ``column'' corresponding to the base power, as shown in Figure~\ref{fig:gs01}. After we have computed all partial products, we add the partial products within each ``column'' or base power. Finally, we carry any overflow of partial products to the next column/base power, and we have our summation of final products yielding the answer $97047$. 
+For grade school multiplication, let us use the values $x=1234$ and $y=6789$ to illustrate our algorithm. Instead of simply multiplying the ones' digits $9$ and $4$ and writing the new ones' digit $6$ and carrying the $3$, we will write the individual products in each ``column'' corresponding to the base power, as shown in Figure~\ref{fig:gs01}. After we have computed all partial products, we add the partial products within each ``column'' or base power. Finally, we carry any overflow of partial products to the next column/base power, and we have our summation of final products yielding the answer $8377626$. 
 \begin{figure}[H]
 	\includegraphics{img/gs_multiplication_ex_01}
-	\caption{Grade School Multiplication of $123 \times 789$}
+	\caption{Grade School Multiplication of $1234 \times 6789$}
 	\label{fig:gs01}
 \end{figure}
 
@@ -234,7 +234,7 @@ If we group 3 digits then we are using a chunk size of 3 base powers, which we t
 From Figure~\ref{fig:cgs01} we can see that we have reduced from $n \times n$ operations to $n/h \times n/h$ operations, which can be a significant real reduction, but still results in a run time of $\mathcal{O}(n^2)$.
 
 \section{Karatsuba}
-We now turn our attention to Karatsuba's algorithm. In 1960, Andrey Kolmogorov conjectured that $\mathcal{O}(n^2)$ was as fast as multiplication could be achieved. Kolmogorov held a seminar at Moscow University where he presented this and other conjectures. Anatoly Karatsuba, a 23-year-old student, found a divide and conquer deconstruction method that multiplies integers in $\mathcal{O}(n^{\log_2 3})$ that he presented at the next seminar, which Kolmogorov then disbanded (TODO: INSERT REFERENCE HERE). Kolmogorov was so impressed with Karatsuba's algorithm that he wrote a paper for him, which Karatsuba only became aware of after the edits were mailed back to him \cite{karatsuba1995complexity}. Perhaps the best way to motivate some is to say that something is impossible.
+We now turn our attention to Karatsuba's algorithm. In 1960, Andrey Kolmogorov conjectured that $\mathcal{O}(n^2)$ was as fast as multiplication could be achieved. Kolmogorov held a seminar at Moscow University where he presented this and other conjectures. Anatoly Karatsuba, a 23-year-old student, found a divide and conquer deconstruction method that multiplies integers in $\mathcal{O}(n^{\log_2 3})$ that he presented at the next seminar, which Kolmogorov then disbanded \cite{wiki:Karatsuba_algorithm}. Kolmogorov was so impressed with Karatsuba's algorithm that he wrote a paper for him, which Karatsuba only became aware of after the edits were mailed back to him \cite{karatsuba1995complexity}. Perhaps the best way to motivate some is to say that something is impossible.
 
 \subsection{Algorithm \nopunct}
 Karatsuba's algorithm involves manipulating the partial products involved in multiplication, a divide and conquer approach. Let the tens' and ones' digits of $x$ to be $ab$, or $X_1 = a$, and $X_0 = b$ from our previous discussions. Similarly, let the tens and ones' digits of $y$ be $cd$, or $Y_1 = c$ and $Y_0 = d$. Figure~\ref{fig:gs_abcd} shows this simple grade school multiplication. 
@@ -267,12 +267,24 @@ Figure~\ref{fig:karatsuba_example} shows an example for $\num{25786109} \times \
 
 Karatsuba's three coefficient products, $ac$, $bd$, and $(a+b)(c+d)$, can be used to recursively subdivide the problem further. Figure~\ref{fig:karatsuba_large_example} shows a larger Karatsuba example where we recursively apply Karatsuba to coefficients.\footnote{The recursion is for illustrative/instructive purposes and unnecessary. We could have used more coefficients and a larger base power without the recursive stages.} The equations in the upper right are those as before. The numbers $1$-$3$ show the three multiplications and the letters  $A$-$E$ to denote the arithmetic quantities computed during the algorithm. We shows these $A$-$E$ quantities under each stage, including the final summation with base powers multiplied into computed quantities. Note that we dispense with printing this final summation after the first stage as the large quantities become cumbersome to print and we just print the $A$-$E$ quantities and final result. \cite{wiki:Karatsuba_algorithm} provides an excellent graphic with another example and a different representation of the computations involved.
 \begin{figure}[H]
+	\advance\leftskip-0.66in
 	\includegraphics{img/karatsuba_large_example}
 	\caption{Larger Karatsuba Example}
 	\label{fig:karatsuba_large_example}
 \end{figure}
 
-(TODO: Add algorithm)
+\begin{algorithm}[H]
+	\caption{Karatsuba's Multiplication}
+	\label{gs_mult_algo}
+	\begin{algorithmic}
+		\Require Given $2$ numbers as $ab$ and $cd$ with a chunk in base $z$, calculate their product $ab \cdot cd$.
+		\State $\alpha = ac$
+		\State $\beta = bd$
+		\State $\delta = (a+b)(c+d)$
+		\State $\gamma = \delta - (\alpha + \beta) = (ad + bc)$
+		\State \Return{ $\alpha z^2 + \gamma z + \beta$}
+	\end{algorithmic}
+\end{algorithm}
 
 \subsection{Time Complexity Analysis \nopunct}
 
@@ -470,13 +482,38 @@ Now we perform the carries based on our chunk size. We used a chunk of $8$, henc
 
 \subsection{Algorithm \nopunct}
 
-TODO: Toom-Cook Algorithm
+The algorithm for Toom-3 is straightforward and was demonstrated in the previous example. For completeness, the algorithm above, and reproduced from \cite{crandall2005prime}, follows.
+
+\begin{algorithm}
+	\caption{Toom-3}
+	\label{toom-3}
+	\begin{algorithmic}
+		\State $r_0 = x_0 - 2x_1 + 4x_2$
+		\State $r_1 = x_0 - x_1 + x_2$
+		\State $r_2 = x_0$
+		\State $r_3 = x_0 + x_1 + x_2$
+		\State $r_4 = x_0 + 2x_1 + 4x_2$
+		\State $x_0 = y_0 - 2y_1 + 4y_2$
+		\State $s_1 = y_0 - y_1 + y_2$
+		\State $s_2 = y_0$
+		\State $s_3 = y_0 + y_1 + y_2$
+		\State $s_4 = y_0 + 2y_1 + 4y_2$
+		\For{$0 \leq j < 5$}
+			\State $t_j = r_j s_j$
+		\EndFor
+		\State $z_0 = t_2$
+		\State $z_1 = t_0/12 - 2t_1/3 + 5t_3/3-t_4/12$
+		\State $z_2 = -t_0/24 + 2t_1/3 - 5t_2/4 + 2t_3/3 - t_4/24$
+		\State $z_3 = -t_0/12 + t_1/6 + t_4/12$
+		\State $z_4 = t_0/24 - t_1/6 + t_2/4 -t_3/6 + t_4/24$
+		\State Perform carries
+		\State \Return{$(z_0, z_1, z_2, z_3, z_4, carry)$}
+	\end{algorithmic}
+\end{algorithm}
 
 \subsection{Time Complexity Analysis \nopunct}
 
-TODO: Toom-Cook Analysis
-
-Note how quickly the number of terms grows as we partition our multiplicands into larger numbers. In most cases, this limits the practical use of Toom-Cook to three or four partitions.
+The basic form of Toom-Cook $k$-way is to split the operands into $k$ partial products. For Toom-3 as we demonstrated, we split into 3 partial products but have 5 multiplies at each stage, so the complexity is $\mathcal{O}(n^{\log_3{5}})$. Note how quickly the number of terms grows as we partition our multiplicands into larger numbers. In most cases, this limits the practical use of Toom-Cook to three or four partitions. 
 
 \section{Convolution, the DFT, and the FFT}
 
@@ -537,14 +574,14 @@ Of course, we then carry at each power:
 	h_6 &= 6 + 2 &&\to 8
 \end{align*}
 
-So our final answer is $1234 \times 6789 = \num{8377626}$. This operation should look extremely familiar. This is the same as (TODO: INSERT REFERENCE HERE) from (TODO: INSESRT REFERENCE HERE). We reproduce (TODO: INSERT REFERENCE HERE) for convenience.
+So our final answer is $1234 \times 6789 = \num{8377626}$. This operation should look extremely familiar. This is the same as our initial grade school example from section \ref{gs}. We reproduce Figure~\ref{fig:gs01} her for convenience.
 \begin{figure}[H]
 	\includegraphics{img/gs_mul4}
 	\caption{Grade School Multiplication of $1234 \times 6789$ - again}
 	\label{fig:gs01_again}
 \end{figure}
 
-To provide a visual, many texts (TODO: INSERT REFERENCES) discuss the convolution operation in terms of reflecting one function about the y-axis and sliding that function, ($x(n)$) in this case, across the other. When we do this we will see the same grade school multiplication operation that we are used to. Figure~\ref{fig:conv} below illustrates the operation. Note that we have provided zeroes for coefficients outside our populated coefficients. We dispense with these zeroes to show the "sliding" of $x(n)$ across $y(n)$. The box drawn around the coefficients shows us which terms we are multiplying (vertically) and summing (horizontally) to compute each $h(n)$ coefficient. 
+To provide a visual, many texts discuss the convolution operation in terms of reflecting one function about the y-axis and sliding that function, ($x(n)$) in this case, across the other. When we do this we will see the same grade school multiplication operation that we are used to. Figure~\ref{fig:conv} below illustrates the operation. Note that we have provided zeroes for coefficients outside our populated coefficients. We dispense with these zeroes to show the "sliding" of $x(n)$ across $y(n)$. The box drawn around the coefficients shows us which terms we are multiplying (vertically) and summing (horizontally) to compute each $h(n)$ coefficient. 
 \begin{figure}[H]
 	\includegraphics{img/convolution}
 	\caption{Multiplication via Convolution of $1234 \times 6789 = \num{8377626}$}
@@ -827,7 +864,7 @@ $\num{698310488572646777019184} \times \num{144585992498882884065634} = \\
 
 
 \subsection{Floating-Point Complications and Time Complexity Analysis \nopunct} \label{floating_point_complications}
-There are multiple issues using the FFT to perform large integer multiplication. First, as the interim results from the prior section showed, the FFT requires complex, floating-point values. As we also saw, even though we are using single-digit coefficients, the FFT can become quite large for a single entry. So there are two issues: numerical accuracy/precision, and preventing overflow for large enough entries. 
+There are multiple issues using the FFT to perform large integer multiplication. First, as the interim results from the prior section showed, the FFT requires complex, floating-point values. As we also saw, even though we are using single-digit coefficients, the FFT can become quite large for a single entry. So there are two issues: numerical precision, and preventing overflow for large enough entries. 
 
 The FFT is remarkably well behaved in terms of stability\cite{higham2002accuracy}, but we must have enough bits to ensure that we carry enough precision through the FFT calculations\cite{proakis1995digital}. At a minimum, we need to be able to differentiate twiddle factors, or points on the unit circle. The methods to determine when to split these calculations further to provide smaller blocks of numbers or more precision are quite involved. Interested parties are referred to \cite{brent2010modern} which provides a helpful amount of detail. These details involving the FFT computations for arbitrarily-sized numbers require another $\log{\log{n}}$ term in our big O notation, yielding a final time complexity of $\mathcal{O}(n \log{n} \log{\log{n}})$\cite{brent2010modern}\cite{higham2002accuracy}\cite{proakis1995digital}.
 
@@ -845,15 +882,47 @@ and if using modulo arithmetic for some prime $p$, then
 	X(m) = \sum_{n=0}^{D-1} x(n) g^{-jm} \mod{p}.
 \end{equation*}
 
-If we use modulo arithmetic instead of the complex exponential as our primitive root of unit $g$, then we call the transform a Number-Theoretic Transform (NTT). There are a large number of NTTs used in the multiplication of large integers, typically dealing with prime numbers \cite{baron2003analytical}\cite{crandall1999integer}\cite{crandall2005prime}\cite{harvey2021integer}\cite{silverman2014friendly}\cite{van1992computational}. The most widely-used NTT for large integer multiplication is Sch\"{o}nhage-Strassen. Here the NTT is sometimes called a Fermat Number Transform (FNT)\footnote{In honor of Fermat's contributions rather than having anything to do with a Fermat number.}.
+If we use modulo arithmetic instead of the complex exponential as our primitive root of unity $g$, then we call the transform a Number-Theoretic Transform (NTT). There are a large number of NTTs used in the multiplication of large integers, typically dealing with prime numbers \cite{baron2003analytical}\cite{crandall1999integer}\cite{crandall2005prime}\cite{harvey2021integer}\cite{silverman2014friendly}\cite{van1992computational}. The most widely-used NTT for large integer multiplication is Sch\"{o}nhage-Strassen. Here the NTT is sometimes called a Fermat Number Transform (FNT)\footnote{In honor of Fermat's contributions rather than having anything to do with a Fermat number.}.
 
 For background regarding the  multitude of necessary prime number properties requisite to compute the FNT in Sch\"{o}nage-Strassen, we highly recommend reviewing \cite{silverman2014friendly}.
 
 \section{Sch\"{o}nhage-Strassen}
 
+The Sch\"{o}nhage-Strassen algorithm typically uses a prime number in the format $2^n-1$ generating a finite field/ring  $\mathbb{Z}_{2^n+1}$. The primitive root of unity must be a generator for the chosen prime. Sch\"{o}nhage-Strassen is typically used with numbers in the hundreds of thousands of digits. Because the complex FFT is so well behaved, the complex FFT is used even though Sch\"{o}nhage-Strassen does not have the same issues with floating-point precision.
 
+The $2^n-1$ prime, when coupled with other restrictions on the generator, grouping of digits, and length of the padded input vectors, yield several nice properties for the algorithm that reduce all operations aside from the multiplication of transformed numbers to shifts and adds, which in practice can make the algorithm quite fast \cite{crandall2005prime}.
+
+For our example, we will pick a small prime and generator to illustrate the algorithm with our previous example of $\num{1234} \times \num{6789} = \num{8377626}$. We will use the prime $p = 337$ and primitive root of unity/generator $w = 85$. See the code files \textit{ntt.py} for the Number Theoretic Transform and \textit{schonhage\_strassen.py} for the implementation of the algorithm and this test example. We group single decimal digits for ease, and take the NTT of our input vectors:
+
+
+\begin{align*}
+	X &= NTT(x) = \{10, 329, 298, 126, 2, 271, 43, 301\} \\
+	Y &= NTT(y) = \{30, 32, 298, 34, 2, 36, 43, 271\}.
+\end{align*}
+
+We can then point-wise multiply our individual transforms modulo $p$ to obtain the polynomial coefficients of our result in $\mathbb{Z}_p$:
+\begin{align*}
+	Z &= X \cdot Y \mod{p} \\
+	Z &= \{300, 81, 173, 240, 4, 320, 164, 17\}.
+\end{align*}
+
+We then take the inverse Number Theoretic Transform or INTT:
+\begin{align*}
+	z &= INTT(Z) \\
+	z &= \{36, 59, 70, 70, 40, 19, 6, 0\}.
+\end{align*}
+
+From here we then simply perform our typical carry operation to yield the final answer:
+\begin{align*}
+	z = carry_ones(z) \\
+	z = \{6, 2, 6, 7, 7, 3, 8, 0\}.
+\end{align*}
+
+We can then strip leading zeroes and write our final answer, $\num{1234} \times \num{6789} = \num{8377626}$.
 
 \subsection{Algorithm \nopunct}
+
+The algorithm here is taken from \cite{crandall2005prime} and adapted slightly to be consistent with the notation we have been using throughout the paper.
 
 \begin{algorithm}
 	\caption{Sch\"{o}nhage-Strassen FNT}
@@ -879,7 +948,7 @@ For background regarding the  multitude of necessary prime number properties req
 				\State $c_j = c_j - (2^{n'}+1)$ ($c_j$ may be negative)
 			\EndIf
 		\EndFor
-		\State Perform carry operations as done previously for $c_j$'s.\\
+		\State Perform carry operations as done previously for $c_j$'s.
 		\State \Return{$z \mod{(2^n+1)}$}
 	\end{algorithmic}
 \end{algorithm}
@@ -888,7 +957,7 @@ Note that above we have used NTT to denote the Number Theoretic Transform that i
 
 \subsection{Time Complexity Analysis \nopunct}
 
-
+Similar to the complex FFT, the Sch\"{o}nhage-Strassen algorithm yields a complexity of $\mathcal{O}(n \log{n} \log{\log{n}})$. The $n \log{n}$ term is rather obvious as it is the same as the complex FFT. The $\log{\log{n}}$ term comes from having to reduce the size of the interim products with the NTT. This extra complexity of $\log{\log{n}}$ yields a final time-complexity for the Sch\"{o}nhage-Strassen algorithm of $\mathcal{O}(n \log{n} \log{\log{n}})$.
 
 \section{Conclusion}
 
