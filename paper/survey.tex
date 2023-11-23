@@ -76,7 +76,7 @@ Large integer multiplication is pervasive in our lives in the form of cryptograp
 
 How do computers multiply integers larger than the number of bits within dedicated hardware? This paper provides a survey of several large integer multiplication algorithms that answer this question. The aim of the paper is to provide a friendly introduction with many examples such that undergraduate students can look past the complexity of these algorithms, grasp the fundamentals, and hopefully understand some of the beauty in the algorithms. 
 
-The title of the paper is a tribute to Dr. Silverman's wonderful \textit{A Friendly Introduction to Number Theory}. We will start with grade school multiplication, then cover a simple but useful extension that allows multiplication in ``chunks''. We then cover the first advance in nearly 4000 years \cite{burton1985history}, Karatsuba's algorithm. Next we will discuss the Toom-Cook algorithm that is a generalization of Karatsuba's algorithm. Next we cover the fundamentals of the Discrete Fourier Transform (DFT) and Fast Fourier Transform (FFT) to understand how these algorithms are used to multiply large integers. Finally, we cover a few aspects of prime numbers and the Sch\"{o}nhage-Strassen multiplication algorithm, which gets us to $\mathcal{O}(n \log{n} \log{\log{n}})$ time complexity.
+The title of the paper is a tribute to Dr. Silverman's wonderful \textit{A Friendly Introduction to Number Theory}. We will start with grade school multiplication, then cover a simple but useful extension that allows multiplication in ``chunks''. We then cover the first advance in nearly 4000 years \cite{burton1985history}, Karatsuba's algorithm. Next we will discuss the Toom-Cook algorithm that is a generalization of Karatsuba's algorithm. Next we cover the fundamentals of the Discrete Fourier Transform (DFT) and Fast Fourier Transform (FFT) to understand how these algorithms are used to multiply large integers. Finally, we cover the Sch\"{o}nhage-Strassen multiplication algorithm, which gets us to $\mathcal{O}(n \log{n} \log{\log{n}})$ time complexity.
 
 \subsection{Prerequisites}
 There are surprisingly few prerequisites to understand this material. The most important prerequisites are some familiarity with mathematical notation and the desire to understand large integer multiplication. Grade school arithmetic and trigonometry through complex numbers and the unit circle is all that is required. The more advanced algorithms would benefit from familiarity with matrix manipulation, Linear Algebra, and Calculus, but these are not strict prerequisites. As this is a friendly introduction, we have tried to make the algorithms available to the widest audience possible, and hence avoided discussions that require more advanced mathematics. Suggestions to make the material available to an even wider audience are welcome.
@@ -829,15 +829,66 @@ $\num{698310488572646777019184} \times \num{144585992498882884065634} = \\
 \subsection{Floating-Point Complications and Time Complexity Analysis \nopunct} \label{floating_point_complications}
 There are multiple issues using the FFT to perform large integer multiplication. First, as the interim results from the prior section showed, the FFT requires complex, floating-point values. As we also saw, even though we are using single-digit coefficients, the FFT can become quite large for a single entry. So there are two issues: numerical accuracy/precision, and preventing overflow for large enough entries. 
 
-The FFT is remarkably well behaved in terms of stability\cite{higham2002accuracy}, but we must have enough bits to ensure that we carry enough precision through the FFT calculations\cite{proakis1995digital}. At a minimum, we need to be able to differentiate twiddle factors, or points on the unit circle. The methods to determine when to split these calculations further to provide smaller blocks of numbers or more precision are quite involved. Interested parties are referred to \cite{brent2010modern} which provides a helpful amount of detail. These details involving the FFT computations for arbitrarily-sized numbers require another $\log{\log{n}}$ term in our big O notation, yielding a final time complexity of $\mathcal{O}(n \log{n} \log{\log{n}})$\cite{higham2002accuracy}\cite{proakis1995digital}\cite{brent2010modern}.
+The FFT is remarkably well behaved in terms of stability\cite{higham2002accuracy}, but we must have enough bits to ensure that we carry enough precision through the FFT calculations\cite{proakis1995digital}. At a minimum, we need to be able to differentiate twiddle factors, or points on the unit circle. The methods to determine when to split these calculations further to provide smaller blocks of numbers or more precision are quite involved. Interested parties are referred to \cite{brent2010modern} which provides a helpful amount of detail. These details involving the FFT computations for arbitrarily-sized numbers require another $\log{\log{n}}$ term in our big O notation, yielding a final time complexity of $\mathcal{O}(n \log{n} \log{\log{n}})$\cite{brent2010modern}\cite{higham2002accuracy}\cite{proakis1995digital}.
 
-\section{Modulo Arithmetic}
+\section{Modulo Arithmetic and Prime Numbers}
 
+Fourier was primarily concerned with decomposing time-domain signals into their frequency domain content via sines and cosines to understand heat flow\cite{baron2003analytical}, and the Discrete Fourier Transform is the discrete version of the Fourier transform and indeed gives cyclic frequency domain content via Euler's $e^{-i2 \pi n / N}$. From a mathematical point of view, the DFT, and by extension the FFT, can continue to carry out transforms so long as we use a primitive root of unity in the transform and that root has an inverse. In this paper so far we have used the complex exponential $e^{-i 2 \pi n /N}$, which we have called a twiddle factor $W_N^n$, as our primitive root of unity in the DFT/FFT, but there are other primitive roots of unity using primes and modulo arithmetic.
+
+We may more abstractly define the DFT of a signal $x$ of length $D$, where $D^-1$ exists, and $g$, a primitive $D$-\textit{th} root of $D$ exists, then the DFT of $x$, $X = DFT(x)$ is defined as:
+\begin{equation*}
+	X(m) = \sum_{n=0}^{D-1} x(n) g^{-jm}
+\end{equation*}
+
+and if using modulo arithmetic for some prime $p$, then 
+\begin{equation*}
+	X(m) = \sum_{n=0}^{D-1} x(n) g^{-jm} \mod{p}.
+\end{equation*}
+
+If we use modulo arithmetic instead of the complex exponential as our primitive root of unit $g$, then we call the transform a Number-Theoretic Transform (NTT). There are a large number of NTTs used in the multiplication of large integers, typically dealing with prime numbers \cite{baron2003analytical}\cite{crandall1999integer}\cite{crandall2005prime}\cite{harvey2021integer}\cite{silverman2014friendly}\cite{van1992computational}. The most widely-used NTT for large integer multiplication is Sch\"{o}nhage-Strassen. Here the NTT is sometimes called a Fermat Number Transform (FNT)\footnote{In honor of Fermat's contributions rather than having anything to do with a Fermat number.}.
+
+For background regarding the  multitude of necessary prime number properties requisite to compute the FNT in Sch\"{o}nage-Strassen, we highly recommend reviewing \cite{silverman2014friendly}.
 
 \section{Sch\"{o}nhage-Strassen}
 
+
+
 \subsection{Algorithm \nopunct}
+
+\begin{algorithm}
+	\caption{Sch\"{o}nhage-Strassen FNT}
+	\label{fnt_algo}
+	\begin{algorithmic}
+		\Require Given $0 \leq x, y <2^n+1$, this algorithm returns $xy \mod{(2^n+1)}$.
+		\State Choose NTT size $D = 2^k | n$.
+		\State With $n = DM$, set a recursion length $n' \geq SM+k$ such that $D | n'$ (e.g. $n'=DM'$).
+		\State Split $x$ and $y$ into $D$ parts of $M$ bits each, and store these parts, considered residues modulo $(2^{n'} + 1)$ into two respective arrays $X_0, X_1, ..., X_{D-1}$ and $Y_0, Y_1, ..., Y_{D-1}$. Note that each element could have $n'+1$ bits later on.
+		\For{$0 \leq j < D$}
+			\State $X_j = (2^{jM'}X_j) \mod{(s^{n'+1})}$
+			\State $Y_j = (2^{jM'}Y_j) \mod{(s^{n'+1})}$
+		\EndFor
+		\State $X = NTT(X)$ (Use $2^{2M'}$ as $D$-\textit{th} root $\mod{(2^{n'1}+1})$)
+		\State $Y = NTT(Y)$
+		\For{$0 \leq j < D$}
+			\State $Z_j = X_jY_j \mod{(2^{n'}+1)}$
+		\EndFor
+		\State $z = NTT(Z)$
+		\For{$0 \leq j < D$}
+			\State $c_j = Z_{D-j} / 2^{k+jM'} \mod{(2^{n'}+1)}$
+			\If{$c_j > (j+1)2^{2M}$}
+				\State $c_j = c_j - (2^{n'}+1)$ ($c_j$ may be negative)
+			\EndIf
+		\EndFor
+		\State Perform carry operations as done previously for $c_j$'s.\\
+		\State \Return{$z \mod{(2^n+1)}$}
+	\end{algorithmic}
+\end{algorithm}
+
+Note that above we have used NTT to denote the Number Theoretic Transform that is the finite-field FFT. 
+
 \subsection{Time Complexity Analysis \nopunct}
+
+
 
 \section{Conclusion}
 
