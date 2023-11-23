@@ -61,7 +61,7 @@ def interp_w(p: list[int]) -> list[int]:
         w[ix] = int(w[ix])
     return w
 
-def do_carries(w: list[int], h: int) -> list[int]:
+def do_carries(w: list[int], h: int = 1) -> list[int]:
     for ix in range(len(w)-1):
         c, w[ix] = divmod(w[ix], 10**h)
         w[ix+1] += c
