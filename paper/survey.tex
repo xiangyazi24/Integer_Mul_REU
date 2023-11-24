@@ -72,7 +72,7 @@ How do computers multiply integers larger than the number of bits within dedicat
 
 \section{Introduction}
 
-Large integer multiplication is pervasive in our lives in the form of cryptography. One need only look at the innards of any crypto library to find a BigInt library or API behind the scenes. Within those libraries/APIs are the algorithms discussed within this paper. There are other less pervasive uses, such as scientific and algorithm research, large-scale data analysis, and of course computational mathematics. 
+Large integer multiplication is pervasive in our lives in the form of cryptography. One need only look at the innards of any cryptography library to find a BigInt library or API behind the scenes. Within those libraries/APIs are the algorithms discussed within this paper. There are other less pervasive uses, such as scientific and algorithm research, large-scale data analysis, and of course computational mathematics. 
 
 How do computers multiply integers larger than the number of bits within dedicated hardware? This paper provides a survey of several large integer multiplication algorithms that answer this question. The aim of the paper is to provide a friendly introduction with many examples such that undergraduate students can look past the complexity of these algorithms, grasp the fundamentals, and hopefully understand some of the beauty in the algorithms. 
 
@@ -888,9 +888,9 @@ For background regarding the  multitude of necessary prime number properties req
 
 \section{Sch\"{o}nhage-Strassen}
 
-The Sch\"{o}nhage-Strassen algorithm typically uses a prime number in the format $2^n-1$ generating a finite field/ring  $\mathbb{Z}_{2^n+1}$. The primitive root of unity must be a generator for the chosen prime. Sch\"{o}nhage-Strassen is typically used with numbers in the hundreds of thousands of digits. Because the complex FFT is so well behaved, the complex FFT is used even though Sch\"{o}nhage-Strassen does not have the same issues with floating-point precision.
+The Sch\"{o}nhage-Strassen algorithm typically uses a prime number in the format $2^n-1$ generating a finite field/ring  $\mathbb{Z}_{2^n+1}$. The primitive root of unity must be a generator for the chosen prime. Sch\"{o}nhage-Strassen is typically used for numbers with hundreds of thousands of digits. Because the complex FFT is so well behaved, the complex FFT is used even though Sch\"{o}nhage-Strassen does not have the same issues with floating-point precision.
 
-The $2^n-1$ prime, when coupled with other restrictions on the generator, grouping of digits, and length of the padded input vectors, yield several nice properties for the algorithm that reduce all operations aside from the multiplication of transformed numbers to shifts and adds, which in practice can make the algorithm quite fast \cite{crandall2005prime}.
+The $2^n-1$ prime, when coupled with other restrictions on the generator, grouping of digits, and length of the padded input vectors, yield several nice properties for the algorithm that reduce all operations aside from the multiplication of transformed numbers to shifts and adds, which helps to compensate for some of the complexity of the algorithm \cite{crandall2005prime}.
 
 For our example, we will pick a small prime and generator to illustrate the algorithm with our previous example of $\num{1234} \times \num{6789} = \num{8377626}$. We will use the prime $p = 337$ and primitive root of unity/generator $w = 85$. See the code files \textit{ntt.py} for the Number Theoretic Transform and \textit{schonhage\_strassen.py} for the implementation of the algorithm and this test example. We group single decimal digits for ease, and take the NTT of our input vectors:
 
@@ -960,6 +960,11 @@ Note that above we have used NTT to denote the Number Theoretic Transform that i
 Similar to the complex FFT, the Sch\"{o}nhage-Strassen algorithm yields a complexity of $\mathcal{O}(n \log{n} \log{\log{n}})$. The $n \log{n}$ term is rather obvious as it is the same as the complex FFT. The $\log{\log{n}}$ term comes from having to reduce the size of the interim products with the NTT. This extra complexity of $\log{\log{n}}$ yields a final time-complexity for the Sch\"{o}nhage-Strassen algorithm of $\mathcal{O}(n \log{n} \log{\log{n}})$.
 
 \section{Conclusion}
+We have provided a fairly comprehensive survey of large integer multiplication algorithms, tracing from grade school multiplication to the first advancement with Karatsuba, then Toom-Cook (specifically Toom-3), and culminating with advanced approaches that built on convolution and transforms using primitive roots of unity and the complex FFT, culminating in finite-field arithmetic with Sch\"{o}nhage-Strassen. These algorithms took us from $\mathcal{O}(n^2)$ to $\mathcal{O}(n \log{n} \log{\log{n}})$. In 2019 David Harvey and Joris van der Hoeven found an $\mathcal{O}(n \log{n})$ method \cite{harvey2021integer}. The method is highly specialized and due to a multitude of complicated constants, does not eclipse the methods we have already covered until galactic-scale numbers come into play (hundreds of thousands to millions of digits). 
+
+We hope this paper will prove a useful introduction and reference to large integer multiplication methods for those interested in the subject.
+
+\newpage
 
 \section*{Acknowledgments} I would like to extend my heartfelt thanks to Dr. Huang for allowing me to pursue an open-ended survey topic and providing guidance and motivation along the way. I am aware that an undergraduate survey of existing algorithms has few tangible benefits for a professor, but this has been a tremendously rewarding experience for me. Thank you for patience during the weeks where I was making no visible progress. Thank you for your mentorship and gentle steering during this survey. Most of all, thank you for sharing your passion for algorithms and mathematics. That passion is infectious and has made working with you not just a rewarding, but joyful experience. 
 
