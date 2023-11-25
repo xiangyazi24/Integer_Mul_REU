@@ -76,13 +76,13 @@ Large integer multiplication is pervasive in our lives in the form of cryptograp
 
 How do computers multiply integers larger than the number of bits within dedicated hardware? This paper provides a survey of several large integer multiplication algorithms that answer this question. The aim of the paper is to provide a friendly introduction with many examples such that undergraduate students can look past the complexity of these algorithms, grasp the fundamentals, and hopefully understand some of the beauty in the algorithms. 
 
-The title of the paper is a tribute to Dr. Silverman's wonderful \textit{A Friendly Introduction to Number Theory}. We will start with grade school multiplication, then cover a simple but useful extension that allows multiplication in ``chunks''. We then cover the first advance in nearly 4000 years \cite{burton1985history}, Karatsuba's algorithm. Next we will discuss the Toom-Cook algorithm that is a generalization of Karatsuba's algorithm. Next we cover the fundamentals of the Discrete Fourier Transform (DFT) and Fast Fourier Transform (FFT) to understand how these algorithms are used to multiply large integers. Finally, we cover the Sch\"{o}nhage-Strassen multiplication algorithm, which gets us to $\mathcal{O}(n \log{n} \log{\log{n}})$ time complexity.
+The title of the paper is a tribute to Dr. Silverman's wonderful book, \textit{A Friendly Introduction to Number Theory} \cite{silverman2014friendly}. We will start with grade school multiplication, then cover a simple but useful extension that allows multiplication in ``chunks''. We then cover the first advance in nearly 4000 years \cite{burton1985history}, Karatsuba's algorithm. Next we will discuss the Toom-Cook algorithm that is a generalization of Karatsuba's algorithm. Next we cover the fundamentals of the Discrete Fourier Transform (DFT) and Fast Fourier Transform (FFT) to understand how these algorithms are used to multiply large integers. Finally, we cover the Sch\"{o}nhage-Strassen multiplication algorithm, which gets us to $\mathcal{O}(n \log{n} \log{\log{n}})$ time complexity.
 
 \subsection{Prerequisites}
 There are surprisingly few prerequisites to understand this material. The most important prerequisites are some familiarity with mathematical notation and the desire to understand large integer multiplication. Grade school arithmetic and trigonometry through complex numbers and the unit circle is all that is required. The more advanced algorithms would benefit from familiarity with matrix manipulation, Linear Algebra, and Calculus, but these are not strict prerequisites. As this is a friendly introduction, we have tried to make the algorithms available to the widest audience possible, and hence avoided discussions that require more advanced mathematics. Suggestions to make the material available to an even wider audience are welcome.
 
 \subsection{Notation and Volume Challenges}
-The density and abstract symbolic nature of mathematical notation makes understanding the underlying concepts expressed by the notation extremely challenging. Human beings are primarily visual learners, and mathematical notation purposefully condenses and symbolizes ideas into abstract notation that does not readily translate to an intuitive understanding of the underlying concepts. Being able to understand the notation takes time and practice. Developing an intuitive understanding of what the notation represents even more so. We have striven to provide a non-trivial example for each algorithm/transform/concept, but because we are unpacking concise notation, the sheer volume of arithemtic produced can provide its own challenge. Do not despair - if you find yourself lost in the details, remind yourself of what we are trying to compute and the underlying concepts behind the computations and notation. After all, we're just multiplying integers, how complex can it be?
+The density and abstract symbolic nature of mathematical notation makes understanding the underlying concepts expressed by the notation extremely challenging. Human beings are primarily visual learners, and mathematical notation purposefully condenses and symbolizes ideas into abstract notation that does not readily translate to an intuitive understanding of the underlying concepts. Being able to understand the notation takes time and practice. Developing an intuitive understanding of what the notation represents even moreso. We have striven to provide a non-trivial example for each algorithm/transform/concept, but because we are unpacking concise notation, the sheer volume of arithemtic produced can prove challenging on its own. Do not despair - if you find yourself lost in the details, remind yourself of what we are trying to compute and the underlying concepts behind the computations and notation. After all, we're just multiplying integers, how complex can it be?
 
 \subsection{Software}
 The companion software for this paper can be found on GitHub at \textit{github.com/xiangyazi24/Integer\_Mul\_REU}. All of the examples shown are solved in software, as well as all algorithms illustrated.
@@ -93,21 +93,21 @@ Multiplication dates back to at least 2000 B.C. \cite{burton1985history} and of 
 \subsection{Integer Representation \nopunct}
 
 We can express any positive integer $x$ as a summation of coefficients raised to a base power \cite{silverman2014friendly}:
-\begin{equation}
+\begin{equation*}
 	x = \sum_{i=0}^{n-1} X_iB^i.
-\end{equation}
+\end{equation*}
 Given a base system and coefficients, we can express $x$ as a coefficient vector with $n$ entries: 
-\begin{equation}
+\begin{equation*}
 	\mathbf{X}=\{X_0, X_1, X_2, ..., X_{n-1}\}.
-\end{equation}
+\end{equation*}
 E.g. we can represent the number $40342$ as 
-\begin{equation}
-	\mathbf{X}=\{2, 4, 3, 0, 4\}
-\end{equation}
+\begin{equation*}
+	\mathbf{X}=\{2, 4, 3, 0, 4\},
+\end{equation*}
 and in base 10 we would have 
-\begin{equation}
+\begin{equation*}
 	2 \cdot 10^0 + 4 \cdot 10^1 + 3 \cdot 10^2 + 0 \cdot 10^3 + 4 \cdot 10^4 =40342.
-\end{equation}
+\end{equation*}
 
 Note that our coefficients for powers appear ``backward'' in the set/array, as lower-powered coefficients appear first, but we naturally write higher-power to lower-power coefficients left to right when expressing numbers. Even from this simple idea, we can make a few observations that will prove useful later. Given two positive integers $x$ and $y$, with one integer having fewer coefficients, we can still express the integers as vectors of the same length by zero-padding the smaller integer. E.g. let $x=389$ and $y=4$, then we can simply say $\mathbf{X}=\{9, 8, 3\}$ and $\mathbf{Y}=\{4, 0, 0\}$. If the larger integer has $n$ coefficients, we now have two integers with $n$ coefficients.
 
@@ -117,15 +117,15 @@ How many coefficients are necessary to store the result of two $n$-digit positiv
 \end{lem}
 \begin{proof}
 	Let $x$ be an $n$-digit positive integer in positive base $B$. 
-	\begin{align}
+	\begin{align*}
 		x & \leq B^n-1 \\
 		x^2 & \leq ({B^n-1})^2 \\
 		x^2 & \leq B^{2n} - 2B^n + 1 \label{max_base_number}
-	\end{align}
+	\end{align*}
 	$2B^n > 1$ for all $B>0$, so we may simplify the right side of equation~\ref{max_base_number} to 
-	\begin{align}
+	\begin{align*}
 		x^2 & < B^{2n}
-	\end{align}
+	\end{align*}
 \end{proof}
 Let's work an example multiplying $9999 \times 9999 = 99980001$ in base 10. We have $B=10$ and $n=4$. In this case, we are using the maximum value ($9999$) that can be represented in base 10 with 4 digits. We can simply use equation~\ref{max_base_number} directly and compute $x^2$.
 \begin{align*}
@@ -139,7 +139,7 @@ Let us now discuss our (modified) grade school multiplication algorithm.
 \subsection{Algorithm \nopunct}\label{gs}
 
 For grade school multiplication, let us use the values $x=1234$ and $y=6789$ to illustrate our algorithm. Instead of simply multiplying the ones' digits $9$ and $4$ and writing the new ones' digit $6$ and carrying the $3$, we will write the individual products in each ``column'' corresponding to the base power, as shown in Figure~\ref{fig:gs01}. After we have computed all partial products, we add the partial products within each ``column'' or base power. Finally, we carry any overflow of partial products to the next column/base power, and we have our summation of final products yielding the answer $8377626$. 
-\begin{figure}[H]
+\begin{figure}
 	\includegraphics{img/gs_multiplication_ex_01}
 	\caption{Grade School Multiplication of $1234 \times 6789$}
 	\label{fig:gs01}
@@ -152,7 +152,7 @@ Expressed mathematically, we are performing the following,
 \end{equation}
 
 Now, let us determine an algorithm for performing our grade school multiplication. 
-\begin{algorithm}[H]
+\begin{algorithm}
 	\caption{Grade School Multiplication}
 	\label{gs_mult_algo}
 	\begin{algorithmic}
@@ -177,7 +177,7 @@ We will not belabor the time-complexity analysis to determine exact counts of th
 
 \section{Chunky Grade School Multiplication}
 
-We can make a simple modification to our grade school multiplication that allows us to increase our multiplication speed by a factor of our machine's bit-length. Because this technique is generic, the exact bit-lengths involved in integer hardware multiplication aren't necessarily important. The increase comes by recognizing that instead of multiplying a single digit at a time, we can multiply chunks of digits. We will use $\num{123456} \times \num{987654} = \num{121931812224}$ to illustrate\footnote{Note that the spaces in numbers such as these are strictly for readability purposes. Numbers formatted with spaces like those in the previous multiplication are still single contiguous numbers.} our chunky grade school multiplication algorithm improvement.
+We can make a simple modification to our grade school multiplication that allows us to increase our multiplication speed by a factor of our machine's bit-length. Because this technique is generic, the exact bit-lengths involved in integer hardware multiplication aren't necessarily important. The increase comes by recognizing that instead of multiplying a single digit at a time, we can multiply chunks of digits. We will use $\num{123456} \times \num{987654} = \num{121931812224}$ to illustrate\footnote{Note that the spaces in numbers such as these are strictly for readability purposes. Numbers formatted with spaces like those in the previous multiplication are still a single contiguous number.} our chunky grade school multiplication algorithm improvement.
 
 Figure~\ref{fig:cgs01} shows how we can group our digits into chunks. These chunks allow fewer partial products even though we now have more total digits. The chunks ``skip'' base powers by grouping digits. 
  \begin{figure}[H]
@@ -193,7 +193,7 @@ If we group 3 digits then we are using a chunk size of 3 base powers, which we t
 
 \subsection{Algorithm \nopunct}
 
-\begin{algorithm}[H]
+\begin{algorithm}
 	\caption{Chunkify}
 	\label{chunkify}
 	\begin{algorithmic}
@@ -237,7 +237,7 @@ From Figure~\ref{fig:cgs01} we can see that we have reduced from $n \times n$ op
 We now turn our attention to Karatsuba's algorithm. In 1960, Andrey Kolmogorov conjectured that $\mathcal{O}(n^2)$ was as fast as multiplication could be achieved. Kolmogorov held a seminar at Moscow University where he presented this and other conjectures. Anatoly Karatsuba, a 23-year-old student, found a divide and conquer deconstruction method that multiplies integers in $\mathcal{O}(n^{\log_2 3})$ that he presented at the next seminar, which Kolmogorov then disbanded \cite{wiki:Karatsuba_algorithm}. Kolmogorov was so impressed with Karatsuba's algorithm that he wrote a paper for him, which Karatsuba only became aware of after the edits were mailed back to him \cite{karatsuba1995complexity}. Perhaps the best way to motivate some is to say that something is impossible.
 
 \subsection{Algorithm \nopunct}
-Karatsuba's algorithm involves manipulating the partial products involved in multiplication, a divide and conquer approach. Let the tens' and ones' digits of $x$ to be $ab$, or $X_1 = a$, and $X_0 = b$ from our previous discussions. Similarly, let the tens and ones' digits of $y$ be $cd$, or $Y_1 = c$ and $Y_0 = d$. Figure~\ref{fig:gs_abcd} shows this simple grade school multiplication. 
+Karatsuba's algorithm involves manipulating the partial products involved in multiplication, a divide and conquer approach. Let the tens' and ones' digits of $x$ be $ab$, or $X_1 = a$, and $X_0 = b$ from our previous notation. Similarly, let the tens and ones' digits of $y$ be $cd$, or $Y_1 = c$ and $Y_0 = d$. Figure~\ref{fig:gs_abcd} shows this simple grade school multiplication. 
 \begin{figure}[H]
 	\includegraphics{img/gs_abcd}
 	\caption{Grade School $abcd$ Multiplication}
@@ -265,7 +265,7 @@ Figure~\ref{fig:karatsuba_example} shows an example for $\num{25786109} \times \
 	\label{fig:karatsuba_example}
 \end{figure}
 
-Karatsuba's three coefficient products, $ac$, $bd$, and $(a+b)(c+d)$, can be used to recursively subdivide the problem further. Figure~\ref{fig:karatsuba_large_example} shows a larger Karatsuba example where we recursively apply Karatsuba to coefficients.\footnote{The recursion is for illustrative/instructive purposes and unnecessary. We could have used more coefficients and a larger base power without the recursive stages.} The equations in the upper right are those as before. The numbers $1$-$3$ show the three multiplications and the letters  $A$-$E$ to denote the arithmetic quantities computed during the algorithm. We shows these $A$-$E$ quantities under each stage, including the final summation with base powers multiplied into computed quantities. Note that we dispense with printing this final summation after the first stage as the large quantities become cumbersome to print and we just print the $A$-$E$ quantities and final result. \cite{wiki:Karatsuba_algorithm} provides an excellent graphic with another example and a different representation of the computations involved.
+Karatsuba's three coefficient products, $ac$, $bd$, and $(a+b)(c+d)$, can be used to recursively subdivide the problem further. Figure~\ref{fig:karatsuba_large_example} shows a larger Karatsuba example where we recursively apply Karatsuba to coefficients.\footnote{The recursion is for illustrative/instructive purposes and unnecessary. We could have used more coefficients and a larger base power without the recursive stages.} The equations in the upper right are those as before. The numbers $1$-$3$ show the three multiplications and the letters $A$-$E$ denote the arithmetic quantities computed during the algorithm. We shows these $A$-$E$ quantities under each stage, including the final summation with base powers multiplied into computed quantities. Note that we dispense with printing this final summation after the first stage as the large quantities become cumbersome to print and we just print the $A$-$E$ quantities and final result. \cite{wiki:Karatsuba_algorithm} provides an excellent graphic with another example and a different representation of the computations involved.
 \begin{figure}[H]
 	\advance\leftskip-0.66in
 	\includegraphics{img/karatsuba_large_example}
@@ -292,7 +292,7 @@ As we noted above, because Karatsuba allows recursively subdividing the problem 
 
 \section{Toom-Cook} \label{toom_cook}
 
-The Toom-Cook algorithm generalizes the divide and conquer approach used in Karatsuba. Instead of splitting the multiplicands into two parts, Toom-Cook splits the multiplication into $r$ parts. Toom-Cook then uses the splits as coefficients in a polynomial, as we have done before. The clever part of Toom-Cook is to use these splits parts in the $X$ and $Y$ coefficients to represent polynomials $x(t)$ and $y(t)$, then multiply those polynomials together. Because the $x(t)$ and $y(t)$ polynomials will be of degree $r-1$, their product will be of degree $r-2$, at most. We can evaluate the multiplication of $x(t)$ and $y(t)$ at $2r-1$ points to recover the product $w(t)$, of degree $2r-2$. Hence we are now multiplying together polynomials to recover integers! 
+The Toom-Cook algorithm generalizes the divide and conquer approach used in Karatsuba. Instead of splitting the multiplicands into two parts, Toom-Cook splits the multiplication into $r$ parts. Toom-Cook then uses the splits as coefficients in a polynomial, as we have done before. The clever part of Toom-Cook is to use these splits parts in the $X$ and $Y$ coefficients to represent polynomials $x(t)$ and $y(t)$, then multiply those polynomials together. Because the $x(t)$ and $y(t)$ polynomials will be of degree $r-1$, their product will be of degree $2r-2$, at most. We can evaluate the multiplication of $x(t)$ and $y(t)$ at $2r-1$ points to recover the product $w(t)$, of degree $2r-2$ (at most). Hence we are now multiplying together polynomials to recover integers! 
 
 Judicious selection of $r$ and the points at which we multiply the polynomials yields the best results. Toom-Cook multiplication of $n$-word numbers takes, at best, $\mathcal{O}(n^{1+1/\sqrt{\log{n}}})$ \cite{brent2010modern}.
 
@@ -513,17 +513,19 @@ The algorithm for Toom-3 is straightforward and was demonstrated in the previous
 
 \subsection{Time Complexity Analysis \nopunct}
 
-The basic form of Toom-Cook $k$-way is to split the operands into $k$ partial products. For Toom-3 as we demonstrated, we split into 3 partial products but have 5 multiplies at each stage, so the complexity is $\mathcal{O}(n^{\log_3{5}})$. Note how quickly the number of terms grows as we partition our multiplicands into larger numbers. In most cases, this limits the practical use of Toom-Cook to three or four partitions. 
+The basic form of Toom-Cook $k$-way is to split the operands into $k$ partial products. For Toom-3 as we demonstrated, we split into 3 partial products but have 5 multiplies at each stage, so the complexity is $\mathcal{O}(n^{\log_3{5}})$. Note how quickly the number of coefficient terms for our polynomial grows as we partition our multiplicands into larger numbers. In most cases, this limits the practical use of Toom-Cook to three or four partitions. 
 
 \section{Convolution, the DFT, and the FFT}
 
-The Toom-Cook algorithm showed an alternate method to carry out multiplication rather than just optimizing the mechanics of our familiar grade school multiplication process. In the case of Toom-Cook, that was using the multiplicands as coefficients for polynomials, multiplying enough points to represent a resultant polynomial, then interpolating back into the coefficients that represent our desired product. Such alternate methods are often referred to as transforms. We continue on this path of transforms now with the Discrete Fourier Transform (DFT). The Discrete Fourier Transform (DFT) is typically used to take a number of time-domain samples and transform those samples to show the frequency domain content of the signal represented by the time-domain samples. The Fast Fourier Transform (FFT) is a novel method to compute the DFT quickly with the restriction that the number of time domain samples must be a binary power, i.e. $2^m$ for some positive integer $m$. We will utilize the DFT and FFT algorithms that transform a time-domain signal to a frequency domain signal to transform our multiplication process. Before we get to our number theoretic transform, we will review the DFT and FFT algorithms.
+The Toom-Cook algorithm showed an alternate method to carry out multiplication rather than just optimizing the mechanics of our familiar grade school multiplication process. In the case of Toom-Cook, that was using the multiplicands as coefficients for polynomials, multiplying enough points to represent a resultant polynomial, then interpolating back into the coefficients that represent our desired product. Such alternate methods are often referred to as transforms. We continue on this path of transforms now with the Discrete Fourier Transform (DFT). The Discrete Fourier Transform (DFT) is typically used to take a number of time-domain samples and transform those samples to show the frequency domain content of the signal represented by the time-domain samples. The Fast Fourier Transform (FFT) is a novel method to compute the DFT quickly with the restriction that the number of time domain samples must be a binary power, i.e. $2^m$ for some positive integer $m$. We will utilize the DFT and FFT algorithms that transform a time-domain signal to a frequency domain signal to transform our multiplication process. Before we get to these transforms, we will review the DFT and FFT algorithms.
+
+\subsection{The Discrete Fourier Transform}
 
 The DFT formula is
 \begin{equation*}
 	X_m = \sum_{n=0}^{N-1}x_n e^{-i2\pi nm/N}.
 \end{equation*}
-where $e^{-i2\pi nm/N}$ is a complex number that represents $cos{(2 \pi k/n)} - i\sin{(2 \pi k/n)}$. The interesting thing to note, from a number theoretic transform viewpoint, is that $e^{i2\pi k/n}$ raised to any positive integer always has a magnitude of $1$. That is, $|e^{-i2\pi nm/N}| = 1$. A \textit{root of unity} is a number with the property that when raised to a positive integer power, the result is $1$. This will be important in our use of the FFT to compute the multiplication of large integers. The DFT provides the spectral content of the signal, and the larger the number of points used, $N$, the finer the resolution of the spectral content, and the more calculations that must be carried out to attain the DFT.
+where $e^{-i2\pi nm/N}$ is a complex number that represents $cos{(2 \pi k/n)} - i\sin{(2 \pi k/n)}$. The interesting thing to note, from a number theoretic transform viewpoint, is that $e^{i2\pi k/n}$ raised to any positive integer always has a magnitude of $1$. That is, $|e^{-i2\pi nm/N}| = 1$. A \textit{root of unity} is a number with the property that when raised to a positive integer power, the result is $1$. This will be important in our use of the DFT/FFT to compute the multiplication of large integers. The DFT provides the spectral content of the signal, and the larger the number of points used, $N$, the finer the resolution of the spectral content, and the more calculations that must be carried out to attain the DFT.
 
 The root of unity quantity $e^{-i2\pi nm/N}$ is often called the twiddle factor in the DFT and FFT. We use a shorthand to denote twiddle factors:
 \begin{equation}
@@ -534,7 +536,7 @@ The DFT then becomes:
 	X_m = \sum_{n=0}^{N-1}x_n W_N^{nm}.
 \end{equation*}
 
-Why are we bothering to introduce the DFT and how to transform a signal from the time domain to the frequency domain? Because it turns out that convolution in the time domain, at least for coefficients, is the same as multiplication. The issue with this is that the convolution in the time domain is slow, the same as our $\mathcal{O}(n^2)$ from grade school multiplication. But convolution in the time domain is the same as multiplication in the frequency domain. The Fast part of the FFT means we can perform our transform in $\mathcal{O}(n \log n)$. We can quickly transform our signal made up of polynomial coefficients (our time domain signal) using the FFT, do a point-wise multiplication in the frequency domain, then transform back into the time domain by computing an inverse FFT. We are now transforming and multiplying transforms to complete our large integer multiplication! 
+Why are we bothering to introduce the DFT and how to transform a signal from the time domain to the frequency domain? Because convolution in the time domain of coefficients is the same as multiplication. The issue with convolution in the time domain is that it is slow, the same as our $\mathcal{O}(n^2)$ from grade school multiplication. But convolution in the time domain is the same as multiplication in the frequency domain. The Fast part of the FFT means we can perform our transform in $\mathcal{O}(n \log n)$. We can quickly transform our signal made up of polynomial coefficients (our time domain signal) using the FFT, do a point-wise multiplication in the frequency domain, then transform back into the time domain by computing an inverse FFT. We are now transforming and multiplying transforms to complete our large integer multiplication! 
 
 Let's first demonstrate that convolution of polynomial coefficients is the same as multiplication. Let's use $1234 \times 6789$ as our example. In this case, we have
 \begin{align*}
@@ -543,11 +545,11 @@ Let's first demonstrate that convolution of polynomial coefficients is the same 
 \end{align*}
 
 The convolution is defined as 
-\begin{equation*}
+\begin{equation}
 	(x * y) (n) = \sum_{k=-\infty}^{\infty} x(k) y(n-k).
-\end{equation*}
+\end{equation}
 
-If we are working with coefficients for a polynomial with $n$ coefficients, we can change the summation limits to reflect the actual limits of the summation. Remember that our product can have up to $2n$ coefficients if our multiplicands each have $n$ bits. Because we're starting our numbering at $0$, we will set the upper limit at $2n-1$. While we're at it, let's use a new variable for the convolution result and say $x*y=h$:
+If we are working with coefficients for a polynomial with $n$ coefficients, we can change the summation limits to reflect the actual limits of the summation. Remember that our product can have up to $2n$ coefficients if our multiplicands each have $n$ bits. Because we're starting our numbering at $0$, we set the upper limit at $2n-1$. While we're at it, let's use a new variable for the convolution result and define $h = x*y$, then:
 \begin{equation}
 	h(n) = \sum_{k=0}^{2n-1} x(k) y(n-k).
 \end{equation}
@@ -574,14 +576,14 @@ Of course, we then carry at each power:
 	h_6 &= 6 + 2 &&\to 8
 \end{align*}
 
-So our final answer is $1234 \times 6789 = \num{8377626}$. This operation should look extremely familiar. This is the same as our initial grade school example from section \ref{gs}. We reproduce Figure~\ref{fig:gs01} her for convenience.
+So our final answer is $1234 \times 6789 = \num{8377626}$. This operation should look extremely familiar. This is the same as our initial grade school example from section \ref{gs}. We reproduce Figure~\ref{fig:gs01} here for convenience.
 \begin{figure}[H]
 	\includegraphics{img/gs_mul4}
 	\caption{Grade School Multiplication of $1234 \times 6789$ - again}
 	\label{fig:gs01_again}
 \end{figure}
 
-To provide a visual, many texts discuss the convolution operation in terms of reflecting one function about the y-axis and sliding that function, ($x(n)$) in this case, across the other. When we do this we will see the same grade school multiplication operation that we are used to. Figure~\ref{fig:conv} below illustrates the operation. Note that we have provided zeroes for coefficients outside our populated coefficients. We dispense with these zeroes to show the "sliding" of $x(n)$ across $y(n)$. The box drawn around the coefficients shows us which terms we are multiplying (vertically) and summing (horizontally) to compute each $h(n)$ coefficient. 
+To provide a visual, many texts discuss the convolution operation in terms of reflecting one function about the y-axis and sliding that function, $x(n)$ in this case, across the other. When we do this we will see the same grade school multiplication operation that we are used to. Figure~\ref{fig:conv} below illustrates the operation. Note that we have provided zeroes for coefficients outside our populated coefficients. We dispense with these zeroes to show the "sliding" of $x(n)$ across $y(n)$. The box drawn around the coefficients shows us which terms we are multiplying (vertically) and summing (horizontally) to compute each $h(n)$ coefficient. 
 \begin{figure}[H]
 	\includegraphics{img/convolution}
 	\caption{Multiplication via Convolution of $1234 \times 6789 = \num{8377626}$}
@@ -592,10 +594,8 @@ Comparing the partial products summed for each coefficient to the grade school m
 
 Obviously, from here and our examples before, the time complexity of the convolution operation is $\mathcal{O}(n^2)$. Let us now turn to the Fast Fourier Transform and how we may quickly compute the DFT using the FFT.
 
-\subsection{The Discrete Fourier Transform}
-
 \subsection{The Fast Fourier Transform}
-The Fast Fourier Transform algorithm created by Cooley and Tukey in 1965 \cite{cooley1965algorithm} creates a divide-and-conquer method compute the DFT and take advantage of the symmetry and rotation properties of the complex exponentials used in the DFT. Recall the equation for the DFT:
+The Fast Fourier Transform algorithm created by Cooley and Tukey in 1965 \cite{cooley1965algorithm} creates a divide-and-conquer method to compute the DFT and take advantage of the symmetry and rotation properties of the complex exponentials used in the DFT. Recall the equation for the DFT:
 \begin{equation*}
 	X(m) = \sum_{n=0}^{N-1}x(n) e^{-i2\pi nm/N}.
 \end{equation*}
@@ -605,7 +605,7 @@ And the twiddle factor expression:
 \end{equation*}
 The DFT with the twiddle factor then becomes:
 \begin{equation*}
-	X(m) = \sum_{n=0}^{N-1}x(n) W^{mn}.
+	X(m) = \sum_{n=0}^{N-1}x(n) W_N^{mn}.
 \end{equation*}
 And finally, the FFT will make heavy use of the symmetry and periodicity properties of complex exponentials \cite{proakis1995digital}:
 \begin{align*}
@@ -614,9 +614,9 @@ And finally, the FFT will make heavy use of the symmetry and periodicity propert
 \end{align*}
 The FFT begins by dividing the DFT summation into the even $(2n)$ and odd $(2n+1)$ terms:
 \begin{align*}
-	X(m) &= \sum_{n=0}^{N-1}x(n) W^{mn} \\
-	&= \sum_{n=0}^{N/2-1}x_{2n}W_N^{(2n)m} + \sum_{n=0}^{N/2-1}x_{2n+1}W_N^{(2n+1)m} \\
-	&= \sum_{n=0}^{N/2-1}x_{2n}W_N^{2nm} + W_N^m\sum_{n=0}^{N/2-1}x_{2n+1}W_N^{2nm}
+	X(m) &= \sum_{n=0}^{N-1}x(n) W_N^{mn} \\
+	&= \sum_{n=0}^{N/2-1}x(2n)W_N^{(2n)m} + \sum_{n=0}^{N/2-1}x(2n+1)W_N^{(2n+1)m} \\
+	&= \sum_{n=0}^{N/2-1}x(2n)W_N^{2nm} + W_N^m\sum_{n=0}^{N/2-1}x(2n+1)W_N^{2nm}
 \end{align*}
 where we have simply factored out the constant $W_N^m$ from the $(2n+1)$ odd term in the second summation. We can use the periodicity property to simplify the expression further. Because
 \begin{align*}
@@ -673,7 +673,7 @@ Similarly,
 	\sum_{n=0}^{N/2-1} x(2n+1) W_{N/2}^{nm} = \sum_{n=0}^{N/4-1} x(4n+1) W_{N/4}^{nm} + W_{N/2}^m \sum_{n=0}^{N/4-1} x(4n+3) W_{N/4}^{nm}.
 \end{equation*}
 
-At this point a graphic may be instructive. We can think of the FFT as a set of recursive equations where we work backward through the DFT summation, halving the computed sum at each step. Figure~\ref{fig:fft_dit_8point} shows how this would look for an 8-point FFT. Decimation in time refers to the fact that we are halving the computed time series at each step - how we separate the summation into $(2n)$ and $(2n+1)$ samples. If we separated the The DFT output series into even and odd samples then we would be creating a decimation-in-frequency DFT. Both approaches are used in practice and yield the same result, aside from quantization error. 
+At this point a graphic may be instructive. We can think of the FFT as a set of recursive equations where we work backward through the DFT summation, halving the computed sum at each step. Figure~\ref{fig:fft_dit_8point} shows how this would look for an 8-point FFT. Decimation in time refers to the fact that we are halving the computed time series at each step - how we separate the summation into $(2n)$ and $(2n+1)$ samples. If we separated the DFT output series into even and odd samples then we would be creating a decimation-in-frequency DFT. Both approaches are used in practice and yield the same result, aside from quantization error. 
 \begin{figure}
 	\centering
 	\advance\leftskip-0.33in
@@ -682,7 +682,9 @@ At this point a graphic may be instructive. We can think of the FFT as a set of 
 	\label{fig:fft_dit_8point}
 \end{figure}
 
-Figure~\ref{fig:fft_dit_8point} shows an 8-point DFT with its various butterfly stages. Reconciling the decimation in time FFT butterfly stages with the equations is not necessarily intuitive. In a moment, we will enumerate the various butterflies at each stage to show how the computations break down. For now, what is intuitive is the $\mathcal{O}(n)$ multiplications at each stage, and that there are $log_2{n}$ total stages to the radix-2 decimation-in-time FFT. Hence the FFT is a $\mathcal{O}(n log{n})$ algorithm. Now let's turn to computing the FFT at each stage. We start with the output, which we know is simply
+Figure~\ref{fig:fft_dit_8point} shows an 8-point DFT with its various butterfly stages. Reconciling the decimation in time FFT butterfly stages with the equations is not necessarily intuitive. In a moment, we will enumerate the various butterflies at each stage to show how the computations break down. For now, what is intuitive is the $\mathcal{O}(n)$ multiplications at each stage, and that there are $log_2{n}$ total stages to the radix-2 decimation-in-time FFT. Hence the FFT is a $\mathcal{O}(n \log{n})$ algorithm. 
+
+Now let's turn to computing the FFT at each stage. We start with the output, which we know is simply
 \begin{equation*}
 	X(m) = \sum_{n=0}^{N-1}x(n) W^{nm}.
 \end{equation*}
@@ -864,15 +866,15 @@ $\num{698310488572646777019184} \times \num{144585992498882884065634} = \\
 
 
 \subsection{Floating-Point Complications and Time Complexity Analysis \nopunct} \label{floating_point_complications}
-There are multiple issues using the FFT to perform large integer multiplication. First, as the interim results from the prior section showed, the FFT requires complex, floating-point values. As we also saw, even though we are using single-digit coefficients, the FFT can become quite large for a single entry. So there are two issues: numerical precision, and preventing overflow for large enough entries. 
+There are multiple issues using the FFT to perform large integer multiplication. First, as the interim results from the prior section showed, the FFT requires complex, floating-point values. As we also saw, even though we are using single-digit coefficients, the FFT produces values which are very large for a single coefficient. There are two issues: enough numerical precision for our primitive roots of unity, and preventing overflow within each of the coefficients. 
 
 The FFT is remarkably well behaved in terms of stability\cite{higham2002accuracy}, but we must have enough bits to ensure that we carry enough precision through the FFT calculations\cite{proakis1995digital}. At a minimum, we need to be able to differentiate twiddle factors, or points on the unit circle. The methods to determine when to split these calculations further to provide smaller blocks of numbers or more precision are quite involved. Interested parties are referred to \cite{brent2010modern} which provides a helpful amount of detail. These details involving the FFT computations for arbitrarily-sized numbers require another $\log{\log{n}}$ term in our big O notation, yielding a final time complexity of $\mathcal{O}(n \log{n} \log{\log{n}})$\cite{brent2010modern}\cite{higham2002accuracy}\cite{proakis1995digital}.
 
 \section{Modulo Arithmetic and Prime Numbers}
 
-Fourier was primarily concerned with decomposing time-domain signals into their frequency domain content via sines and cosines to understand heat flow\cite{baron2003analytical}, and the Discrete Fourier Transform is the discrete version of the Fourier transform and indeed gives cyclic frequency domain content via Euler's $e^{-i2 \pi n / N}$. From a mathematical point of view, the DFT, and by extension the FFT, can continue to carry out transforms so long as we use a primitive root of unity in the transform and that root has an inverse. In this paper so far we have used the complex exponential $e^{-i 2 \pi n /N}$, which we have called a twiddle factor $W_N^n$, as our primitive root of unity in the DFT/FFT, but there are other primitive roots of unity using primes and modulo arithmetic.
+Fourier was primarily concerned with decomposing time-domain signals into their frequency domain content via sines and cosines to understand heat flow \cite{baron2003analytical}, and the Discrete Fourier Transform is the discrete version of the Fourier transform and indeed gives cyclic frequency domain content via Euler's $e^{-i2 \pi n / N}$. From a mathematical point of view, the DFT, and by extension the FFT, can continue to carry out transforms so long as we use a primitive root of unity in the transform and that root has an inverse. In this paper so far we have used the complex exponential $e^{-i 2 \pi n /N}$ as our primitive root of unity in the DFT/FFT, but there are other primitive roots of unity using primes and modulo arithmetic.
 
-We may more abstractly define the DFT of a signal $x$ of length $D$, where $D^-1$ exists, and $g$, a primitive $D$-\textit{th} root of $D$ exists, then the DFT of $x$, $X = DFT(x)$ is defined as:
+We may more abstractly define the DFT of a signal $x$ of length $D$, where $D^{-1}$ exists, and $g$, a primitive $D$-\textit{th} root of $D$ exists, then the DFT of $x$, $X = DFT(x)$ is defined as:
 \begin{equation*}
 	X(m) = \sum_{n=0}^{D-1} x(n) g^{-jm}
 \end{equation*}
@@ -892,8 +894,7 @@ The Sch\"{o}nhage-Strassen algorithm typically uses a prime number in the format
 
 The $2^n-1$ prime, when coupled with other restrictions on the generator, grouping of digits, and length of the padded input vectors, yield several nice properties for the algorithm that reduce all operations aside from the multiplication of transformed numbers to shifts and adds, which helps to compensate for some of the complexity of the algorithm \cite{crandall2005prime}.
 
-For our example, we will pick a small prime and generator to illustrate the algorithm with our previous example of $\num{1234} \times \num{6789} = \num{8377626}$. We will use the prime $p = 337$ and primitive root of unity/generator $w = 85$. See the code files \textit{ntt.py} for the Number Theoretic Transform and \textit{schonhage\_strassen.py} for the implementation of the algorithm and this test example. We group single decimal digits for ease, and take the NTT of our input vectors:
-
+For our example, we will pick a small prime and generator to illustrate the algorithm with our previous example of $\num{1234} \times \num{6789} = \num{8377626}$. We will use the prime $p = 337$ and primitive root of unity/generator $w = 85$. We group single decimal digits for ease, and take the NTT of our input vectors:
 
 \begin{align*}
 	X &= NTT(x) = \{10, 329, 298, 126, 2, 271, 43, 301\} \\
@@ -914,7 +915,7 @@ We then take the inverse Number Theoretic Transform or INTT:
 
 From here we then simply perform our typical carry operation to yield the final answer:
 \begin{align*}
-	z = carry_ones(z) \\
+	z = carry\_ones(z) \\
 	z = \{6, 2, 6, 7, 7, 3, 8, 0\}.
 \end{align*}
 
@@ -960,7 +961,7 @@ Note that above we have used NTT to denote the Number Theoretic Transform that i
 Similar to the complex FFT, the Sch\"{o}nhage-Strassen algorithm yields a complexity of $\mathcal{O}(n \log{n} \log{\log{n}})$. The $n \log{n}$ term is rather obvious as it is the same as the complex FFT. The $\log{\log{n}}$ term comes from having to reduce the size of the interim products with the NTT. This extra complexity of $\log{\log{n}}$ yields a final time-complexity for the Sch\"{o}nhage-Strassen algorithm of $\mathcal{O}(n \log{n} \log{\log{n}})$.
 
 \section{Conclusion}
-We have provided a fairly comprehensive survey of large integer multiplication algorithms, tracing from grade school multiplication to the first advancement with Karatsuba, then Toom-Cook (specifically Toom-3), and culminating with advanced approaches that built on convolution and transforms using primitive roots of unity and the complex FFT, culminating in finite-field arithmetic with Sch\"{o}nhage-Strassen. These algorithms took us from $\mathcal{O}(n^2)$ to $\mathcal{O}(n \log{n} \log{\log{n}})$. In 2019 David Harvey and Joris van der Hoeven found an $\mathcal{O}(n \log{n})$ method \cite{harvey2021integer}. The method is highly specialized and due to a multitude of complicated constants, does not eclipse the methods we have already covered until galactic-scale numbers come into play (hundreds of thousands to millions of digits). 
+We have provided a survey of large integer multiplication algorithms, tracing from grade school multiplication to the first advancement with Karatsuba, then Toom-Cook (specifically Toom-3), and culminating with advanced approaches that built on convolution and transforms using primitive roots of unity and the complex FFT, culminating in finite-field arithmetic with Sch\"{o}nhage-Strassen. These algorithms took us from $\mathcal{O}(n^2)$ to $\mathcal{O}(n \log{n} \log{\log{n}})$. In 2019 David Harvey and Joris van der Hoeven found an $\mathcal{O}(n \log{n})$ method \cite{harvey2021integer}. The method is highly specialized and due to a multitude of complicated constants, does not eclipse the methods we have already covered until galactic-scale numbers come into play (millions of digits and beyond). Accordingly, the algorithms presented in this paper are still relevant and used in big number code libraries.
 
 We hope this paper will prove a useful introduction and reference to large integer multiplication methods for those interested in the subject.
 
