@@ -163,8 +163,8 @@ Now, let us determine an algorithm for performing our grade school multiplicatio
 	\EndFor
 	\State $c = 0$
 	\For{$j \in \{0,1,...,2n-2\}$}
-		\State $c = W[j] \Mod{B}$				
-		\State $W[j] = \lfloor W[j] / B \rfloor$
+		\State $c = \lfloor W[j] / B \rfloor$				
+		\State $W[j] = W[j] \Mod{B}$
 		\State $W[j+1] += c$
 	\EndFor
 	\State return $W$
@@ -204,7 +204,7 @@ If we group 3 digits then we are using a chunk size of 3 base powers, which we t
 		\State $Y_{chunky} = \{0, 0, ..., 0\}$
 		\For{$j \in \{0,1,...,nh-1\}$}
 			\State $X_{chunky}[\lfloor j/h \rfloor] += X[j] * 10^{j \Mod{h}}$
-			\State $Y_{chunky}[\lfloor j/h \rfloor] += X[j] * 10^{j \Mod{h}}$
+			\State $Y_{chunky}[\lfloor j/h \rfloor] += Y[j] * 10^{j \Mod{h}}$
 		\EndFor
 		\State return $X_{chunky}, \; Y_{chunky}$
 	\end{algorithmic}
@@ -221,8 +221,8 @@ If we group 3 digits then we are using a chunk size of 3 base powers, which we t
 		\EndFor
 		\State $c = 0$
 		\For{$j \in \{0,1,...,2n-2\}$}
-			\State $c = W[j] \Mod{B^h}$				
-			\State $W[j] = \lfloor W[j] / B^h \rfloor$
+			\State $c = \lfloor W[j] / B^h \rfloor$				
+			\State $W[j] = W[j] \Mod{B^h}$
 			\State $W[j+1] += c$
 		\EndFor
 		\State return $W$
