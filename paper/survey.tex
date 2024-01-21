@@ -234,7 +234,7 @@ If we group 3 digits then we are using a chunk size of 3 base powers, which we t
 From Figure~\ref{fig:cgs01} we can see that we have reduced from $n \times n$ operations to $n/h \times n/h$ operations, which can be a significant real reduction, but still results in a run time of $\mathcal{O}(n^2)$.
 
 \section{Karatsuba}
-We now turn our attention to Karatsuba's algorithm. In 1960, Andrey Kolmogorov conjectured that $\mathcal{O}(n^2)$ was as fast as multiplication could be achieved. Kolmogorov held a seminar at Moscow University where he presented this and other conjectures. Anatoly Karatsuba, a 23-year-old student, found a divide and conquer deconstruction method that multiplies integers in $\mathcal{O}(n^{\log_2 3})$ that he presented at the next seminar, which Kolmogorov then disbanded \cite{wiki:Karatsuba_algorithm}. Kolmogorov was so impressed with Karatsuba's algorithm that he wrote a paper for him, which Karatsuba only became aware of after the edits were mailed back to him \cite{karatsuba1995complexity}. Perhaps the best way to motivate some is to say that something is impossible.
+We now turn our attention to Karatsuba's algorithm. In 1960, Andrey Kolmogorov conjectured that $\mathcal{O}(n^2)$ was as fast as multiplication could be achieved. Kolmogorov held a seminar at Moscow University where he presented this and other conjectures. Anatoly Karatsuba, a 23-year-old student, found a divide and conquer deconstruction method that multiplies integers in $\mathcal{O}(n^{\log_2{3}})$ that he presented at the next seminar, which Kolmogorov then disbanded \cite{wiki:Karatsuba_algorithm}. Kolmogorov was so impressed with Karatsuba's algorithm that he wrote a paper for him, which Karatsuba only became aware of after the edits were mailed back to him \cite{karatsuba1995complexity}. Perhaps the best way to motivate some is to say that something is impossible.
 
 \subsection{Algorithm \nopunct}
 Karatsuba's algorithm involves manipulating the partial products involved in multiplication, a divide and conquer approach. Let the tens' and ones' digits of $x$ be $ab$, or $X_1 = a$, and $X_0 = b$ from our previous notation. Similarly, let the tens and ones' digits of $y$ be $cd$, or $Y_1 = c$ and $Y_0 = d$. Figure~\ref{fig:gs_abcd} shows this simple grade school multiplication. 
@@ -265,6 +265,8 @@ Figure~\ref{fig:karatsuba_example} shows an example for $\num{25786109} \times \
 	\label{fig:karatsuba_example}
 \end{figure}
 
+Karatsuba's three coefficient products, $ac$, $bd$, and $(a+b)(c+d)$, can be used to recursively subdivide the problem further. Figure~\ref{fig:karatsuba_large_example} shows a larger Karatsuba example where we recursively apply Karatsuba to coefficients.\footnote{The recursion is for illustrative/instructive purposes and unnecessary. We could have used more coefficients and a larger base power without the recursive stages.} The equations in the upper right are those as before. The numbers $1$-$3$ show the three multiplications and the letters $A$-$E$ denote the arithmetic quantities computed during the algorithm. We shows these $A$-$E$ quantities under each stage, including the final summation with base powers multiplied into computed quantities. Note that we dispense with printing this final summation after the first stage as the large quantities become cumbersome to print and we just print the $A$-$E$ quantities and final result. \cite{wiki:Karatsuba_algorithm} provides an excellent graphic with another example and a different representation of the computations involved.
+
 \begin{algorithm}[H]
 	\caption{Karatsuba's Multiplication}
 	\label{gs_mult_algo}
@@ -273,15 +275,14 @@ Figure~\ref{fig:karatsuba_example} shows an example for $\num{25786109} \times \
 		\State $\alpha = ac$
 		\State $\beta = bd$
 		\State $\delta = (a+b)(c+d)$
-		\While{$\alpha$, $\beta$, $\delta > $ desired number of bits}
-			\State Split each of the $\alpha$, $\beta$, $\delta$ multiplications into $ab$, $cd$ and apply Karatsuba.
+		\While{$\alpha$, $\beta$, $\delta > $ machine number of digits}
+		\State Split each of the $\alpha$, $\beta$, $\delta$ multiplications into $ab$, $cd$ and apply Karatsuba.
 		\EndWhile
 		\State $\gamma = \delta - (\alpha + \beta) = (ad + bc)$
 		\State \Return{ $\alpha z^2 + \gamma z + \beta$}
 	\end{algorithmic}
 \end{algorithm}
 
-Karatsuba's three coefficient products, $ac$, $bd$, and $(a+b)(c+d)$, can be used to recursively subdivide the problem further. Figure~\ref{fig:karatsuba_large_example} shows a larger Karatsuba example where we recursively apply Karatsuba to coefficients.\footnote{The recursion is for illustrative/instructive purposes and unnecessary. We could have used more coefficients and a larger base power without the recursive stages.} The equations in the upper right are those as before. The numbers $1$-$3$ show the three multiplications and the letters $A$-$E$ denote the arithmetic quantities computed during the algorithm. We shows these $A$-$E$ quantities under each stage, including the final summation with base powers multiplied into computed quantities. Note that we dispense with printing this final summation after the first stage as the large quantities become cumbersome to print and we just print the $A$-$E$ quantities and final result. \cite{wiki:Karatsuba_algorithm} provides an excellent graphic with another example and a different representation of the computations involved.
 \begin{figure}[H]
 	\advance\leftskip-0.66in
 	\includegraphics{img/karatsuba_large_example}
@@ -291,7 +292,7 @@ Karatsuba's three coefficient products, $ac$, $bd$, and $(a+b)(c+d)$, can be use
 
 \subsection{Time Complexity Analysis \nopunct}
 
-As we noted above, because Karatsuba allows recursively subdividing the problem in half, using three coefficient multiplications, the runtime is $\mathcal{O}(n^{\log_2{3}})$. $\log_2{3} \approxeq 1.585$, so the runtime complexity of Karatsuba's algorithm is commonly referred to as $\mathcal{O}(n^{1.585})$. 
+As Algorithm~\ref{gs_mult_algo} and Figure~\ref{fig:karatsuba_large_example} show, Karatsuba recursively subdivides the problem in half using three coefficient multiplications per subdivision. The runtime is then  $\mathcal{O}(n^{\log_2{3}})$. $\log_2{3} \approxeq 1.585$, with the runtime complexity of Karatsuba's algorithm commonly referred to as $\mathcal{O}(n^{1.585})$. 
 
 \section{Toom-Cook} \label{toom_cook}
 
@@ -539,7 +540,7 @@ The DFT then becomes:
 	X_m = \sum_{n=0}^{N-1}x_n W_N^{nm}.
 \end{equation*}
 
-Why are we bothering to introduce the DFT and how to transform a signal from the time domain to the frequency domain? Because convolution in the time domain of coefficients is the same as multiplication. The issue with convolution in the time domain is that it is slow, the same as our $\mathcal{O}(n^2)$ from grade school multiplication. But convolution in the time domain is the same as multiplication in the frequency domain. The Fast part of the FFT means we can perform our transform in $\mathcal{O}(n \log n)$. We can quickly transform our signal made up of polynomial coefficients (our time domain signal) using the FFT, do a point-wise multiplication in the frequency domain, then transform back into the time domain by computing an inverse FFT. We are now transforming and multiplying transforms to complete our large integer multiplication! 
+Why are we bothering to introduce the DFT and how to transform a signal from the time domain to the frequency domain? Because convolution in the time domain of coefficients is the same as multiplication. The issue with convolution in the time domain is that it is slow, the same as our $\mathcal{O}(n^2)$ from grade school multiplication. But convolution in the time domain is the same as multiplication in the frequency domain. The Fast part of the FFT means we can perform our transform in $\mathcal{O}(n \log{n})$. We can quickly transform our signal made up of polynomial coefficients (our time domain signal) using the FFT, do a point-wise multiplication in the frequency domain, then transform back into the time domain by computing an inverse FFT. We are now transforming and multiplying transforms to complete our large integer multiplication! 
 
 Let's first demonstrate that convolution of polynomial coefficients is the same as multiplication. Let's use $1234 \times 6789$ as our example. In this case, we have
 \begin{align*}
@@ -800,7 +801,7 @@ The recursive FFT algorithm from \cite{goodrich2015algorithm} is reproduced in A
 
 \subsection{Time Complexity Analysis \nopunct}
 
-As we have given a large number of equations, examples, and diagrams, it should be clear that the FFT recursively divides summation calculations into half. Thus, the FFT decreases the stages of the DFT to $\mathcal{O}(log{n})$, with $\mathcal{O}(n)$ operations in each stage. In total this gives a run time complexity of $\mathcal{O}(n log{n})$. In practice the FFT is highly efficient as the number of points is known ahead of time and all twiddle factors may be precomputed and stored.
+As we have given a large number of equations, examples, and diagrams, it should be clear that the FFT recursively divides summation calculations into half. Thus, the FFT decreases the stages of the DFT to $\mathcal{O}(\log{n})$, with $\mathcal{O}(n)$ operations in each stage. In total this gives a run time complexity of $\mathcal{O}(n \log{n})$. In practice the FFT is highly efficient as the number of points is known ahead of time and all twiddle factors may be precomputed and stored.
 
 \subsection{The Inverse DFT and FFT}
 
